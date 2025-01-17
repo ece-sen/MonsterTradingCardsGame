@@ -1,0 +1,26 @@
+﻿
+# create user
+curl -i -X POST http://localhost:12000/users --header "Content-Type: application/json" -d "{\"username\":\"batman\", \"password\":\"batcave\"}"
+curl -i -X POST http://localhost:12000/users --header "Content-Type: application/json" -d "{\"username\":\"oswin\", \"password\":\"souffle\", \"name\":\"Clara Oswald\"}"
+
+# shouldn't work
+curl -i -X POST http://localhost:12000/users --header "Content-Type: application/json" -d "{\"username\":\"oswin\", \"password\":\"none\", \"name\":\"Oswin Oswald\"}"
+
+# logon
+curl -i -X POST http://localhost:12000/sessions --header "Content-Type: application/json" -d "{\"username\":\"oswin\", \"password\":\"souffle\"}"
+
+# false logon - shouldn't work
+curl -i -X POST http://localhost:12000/sessions --header "Content-Type: application/json" -d "{\"username\":\"oswin\", \"password\":\"exterminate\"}"
+curl -i -X POST http://localhost:12000/sessions --header "Content-Type: application/json" -d "{\"username\":\"River\", \"password\":\"souffle\"}"
+
+
+curl -i -X GET http://localhost:12000/users/oswin --header "Content-Type: application/json" --header "Authorization: Bearer oswin-debug"
+
+#register
+curl -i -X POST http://localhost:12000/users --header "Content-Type: application/json" -d "{\"username\":\"user_1\", \"password\":\"user_pass\"}"
+
+# get info
+curl -i -X GET http://localhost:12000/users/user_1 --header "Authorization: Bearer <Token>"
+
+#update
+curl -i -X PUT http://localhost:12000/users/new1 --header "Content-Type: application/json" --header "Authorization: Bearer <Token>" -d "{\"password\":\"<ENTER_NEW_PASS>\", \"coins\":<ENTER_NEW_INT>, \"elo\":<ENTER_NEW_INT>}"
