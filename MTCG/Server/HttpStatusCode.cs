@@ -19,5 +19,15 @@ namespace MTCG.Server
 
         /// <summary>Status code NOT FOUND.</summary>
         public const int NOT_FOUND = 404;
+        
+        //<summary>Status code 201.</summary>
+        public const int CREATED = 201;
+        
+        //<summary>Status code 409.</summary>
+        public const int CONFLICT = 409;
+        
+        //<summary>Status code 201.</summary>
+        public const int INTERNAL_SERVER_ERROR = 500;
+
     }
 }

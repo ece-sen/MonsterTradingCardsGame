@@ -71,14 +71,8 @@ namespace MTCG.Server
         /// <param name="password">Password.</param>
         /// <param name="fullName">Full name.</param>
         /// <param name="eMail">E-mail addresss.</param>
-        /// <exception cref="UserException">Thrown when the user name already exists.</exception>
         public static void Create(string userName, string password)
         {
-            if(_Users.ContainsKey(userName))
-            {
-                throw new UserException("User name already exists.");
-            }
-
             User user = new()
             {
                 UserName = userName,

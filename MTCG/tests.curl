@@ -1,26 +1,44 @@
-﻿
-# create user
-curl -i -X POST http://localhost:12000/users --header "Content-Type: application/json" -d "{\"username\":\"batman\", \"password\":\"batcave\"}"
-curl -i -X POST http://localhost:12000/users --header "Content-Type: application/json" -d "{\"username\":\"oswin\", \"password\":\"souffle\", \"name\":\"Clara Oswald\"}"
+﻿"1) Create Users (Registration)"
+# Create User
+curl -i -X POST http://localhost:12000/users --header "Content-Type: application/json" -d "{\"username\":\"kienboec\", \"password\":\"daniel\"}"
+echo "Should return HTTP 201"
+echo .
+curl -i -X POST http://localhost:12000/users --header "Content-Type: application/json" -d "{\"username\":\"altenhof\", \"password\":\"markus\"}"
+echo "Should return HTTP 201"
+echo .
+curl -i -X POST http://localhost:12000/users --header "Content-Type: application/json" -d "{\"username\":\"admin\",    \"password\":\"istrator\"}"
+echo "Should return HTTP 201"
 
-# shouldn't work
-curl -i -X POST http://localhost:12000/users --header "Content-Type: application/json" -d "{\"username\":\"oswin\", \"password\":\"none\", \"name\":\"Oswin Oswald\"}"
+"should fail:"
+curl -i -X POST http://localhost:12000/users --header "Content-Type: application/json" -d "{\"username\":\"kienboec\", \"password\":\"daniel\"}"
+echo "Should return HTTP 4xx - User already exists"
+echo .
+curl -i -X POST http://localhost:12000/users --header "Content-Type: application/json" -d "{\"username\":\"kienboec\", \"password\":\"different\"}"
+echo "Should return HTTP 4xx - User already exists"
 
-# logon
-curl -i -X POST http://localhost:12000/sessions --header "Content-Type: application/json" -d "{\"username\":\"oswin\", \"password\":\"souffle\"}"
+"2) Login Users"
+curl -i -X POST http://localhost:12000/sessions --header "Content-Type: application/json" -d "{\"username\":\"kienboec\", \"password\":\"daniel\"}"
+echo "should return HTTP 200 with generated token for the user, here: kienboec-mtcgToken"
+echo .
+curl -i -X POST http://localhost:12000/sessions --header "Content-Type: application/json" -d "{\"username\":\"altenhof\", \"password\":\"markus\"}"
+echo "should return HTTP 200 with generated token for the user, here: altenhof-mtcgToken"
+echo .
+curl -i -X POST http://localhost:12000/sessions --header "Content-Type: application/json" -d "{\"username\":\"admin\",    \"password\":\"istrator\"}"
+echo "should return HTTP 200 with generated token for the user, here: admin-mtcgToken"
 
-# false logon - shouldn't work
-curl -i -X POST http://localhost:12000/sessions --header "Content-Type: application/json" -d "{\"username\":\"oswin\", \"password\":\"exterminate\"}"
-curl -i -X POST http://localhost:12000/sessions --header "Content-Type: application/json" -d "{\"username\":\"River\", \"password\":\"souffle\"}"
+"should fail:"
+curl -i -X POST http://localhost:12000/sessions --header "Content-Type: application/json" -d "{\"username\":\"kienboec\", \"password\":\"different\"}"
+echo "Should return HTTP 4xx - Login failed"
+
+"3) create packages (done by admin)"
+curl -i -X POST http://localhost:12000/packages --header "Content-Type: application/json" --header "Authorization: Bearer admin-mtcgToken" -d "[{\"Id\":\"845f0dc7-37d0-426e-994e-43fc3ac83c08\", \"Name\":\"WaterGoblin\", \"Damage\": 10.0}, {\"Id\":\"99f8f8dc-e25e-4a95-aa2c-782823f36e2a\", \"Name\":\"Dragon\", \"Damage\": 50.0}, {\"Id\":\"e85e3976-7c86-4d06-9a80-641c2019a79f\", \"Name\":\"WaterSpell\", \"Damage\": 20.0}, {\"Id\":\"1cb6ab86-bdb2-47e5-b6e4-68c5ab389334\", \"Name\":\"Ork\", \"Damage\": 45.0}, {\"Id\":\"dfdd758f-649c-40f9-ba3a-8657f4b3439f\", \"Name\":\"FireSpell\",    \"Damage\": 25.0}]"
+echo "Should return HTTP 201"
 
 
-curl -i -X GET http://localhost:12000/users/oswin --header "Content-Type: application/json" --header "Authorization: Bearer oswin-debug"
-
+////////////////////my examples//////////////////
 #register
-curl -i -X POST http://localhost:12000/users --header "Content-Type: application/json" -d "{\"username\":\"user_1\", \"password\":\"user_pass\"}"
-
+curl -i -X POST http://localhost:12000/sessions --header "Content-Type: application/json" -d "{\"username\":\"user_1\", \"password\":\"user_pass\"}"
 # get info
 curl -i -X GET http://localhost:12000/users/user_1 --header "Authorization: Bearer <Token>"
-
 #update
 curl -i -X PUT http://localhost:12000/users/new1 --header "Content-Type: application/json" --header "Authorization: Bearer <Token>" -d "{\"password\":\"<ENTER_NEW_PASS>\", \"coins\":<ENTER_NEW_INT>, \"elo\":<ENTER_NEW_INT>}"

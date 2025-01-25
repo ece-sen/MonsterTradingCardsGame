@@ -37,23 +37,33 @@ namespace MTCG.Server
                 JsonNode? json = JsonNode.Parse(e.Payload);
                 if (json != null)
                 {
-                    User.Create((string)json["username"]!, (string)json["password"]!);
-                    status = HttpStatusCode.OK;
+                    string username = (string)json["username"]!;
+                    string password = (string)json["password"]!;
+
+                    User.Create(username, password);
+                    status = HttpStatusCode.CREATED; // HTTP 201
                     reply = new JsonObject { ["success"] = true, ["message"] = "User created." };
                 }
             }
-            catch (UserException ex)
+            catch (Exception ex)
             {
+                // Check the exception message to customize the status code
+                if (ex.Message == "User name already exists.")
+                {
+                    status = HttpStatusCode.CONFLICT; // HTTP 409
+                }
+                else
+                {
+                    status = HttpStatusCode.INTERNAL_SERVER_ERROR; // HTTP 500
+                }
+
                 reply = new JsonObject { ["success"] = false, ["message"] = ex.Message };
-            }
-            catch (Exception)
-            {
-                reply = new JsonObject { ["success"] = false, ["message"] = "Unexpected error." };
             }
 
             e.Reply(status, reply?.ToJsonString());
             return true;
         }
+
 
         private static bool _QueryUser(HttpSvrEventArgs e)
         {

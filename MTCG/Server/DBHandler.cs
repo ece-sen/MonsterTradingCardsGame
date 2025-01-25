@@ -24,31 +24,31 @@ namespace MTCG.Server
         {
             try
             {
-                const string query = @"
-                INSERT INTO users (username, password, coins, elo) 
-                VALUES (@username, @password, @coins, @elo);";
+                using (var connection = new NpgsqlConnection(_connectionString))
+                {
+                    connection.Open();
+                    var query = "INSERT INTO users (username, password, coins, elo) VALUES (@username, @password, @coins, @elo)";
+                    using (var cmd = new NpgsqlCommand(query, connection))
+                    {
+                        cmd.Parameters.AddWithValue("username", userName);
+                        cmd.Parameters.AddWithValue("password", password);
+                        cmd.Parameters.AddWithValue("coins", coins);
+                        cmd.Parameters.AddWithValue("elo", elo);
 
-                
-                using var connection = GetConnection();
-                connection.Open();
-                using var command = new NpgsqlCommand(query, connection);
-                
-                command.Parameters.AddWithValue("@username", userName);
-                command.Parameters.AddWithValue("@password", password);
-                command.Parameters.AddWithValue("@coins", coins);
-                command.Parameters.AddWithValue("@elo", elo);
-
-                command.ExecuteNonQuery();
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+            }
+            catch (PostgresException ex) when (ex.SqlState == "23505")
+            {
+                throw new Exception("User name already exists.");
             }
             catch (Exception ex)
             {
-                Console.WriteLine(ex.Message);
-                throw ex;
+                throw new Exception("An error occurred while interacting with the database.", ex);
             }
-        
-            
-
         }
+
 
         /// <summary>
         /// Get user by username.
