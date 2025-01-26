@@ -55,7 +55,7 @@ namespace MTCG.Server
         public int coins { get; set; }
         
         public int elo { get; set; }
-        
+
 
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // public methods                                                                                                   //

@@ -27,6 +27,7 @@ namespace MTCG.Server
         
         /// <summary>Discovers and returns all available handler implementations.</summary>
         /// <returns>Returns a list of available handlers.</returns>
+        private static readonly object _HandlerLock = new();
         private static List<IHandler> _GetHandlers()
         {
             List<IHandler> rval = new();
