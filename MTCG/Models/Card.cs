@@ -2,11 +2,13 @@
 
 public abstract class Card
 {
+    public string Id { get; set; } 
     public string Name {get; set;}
     public int Damage {get; set;}
 
-    public Card(string name, int damage)
+    public Card(string id, string name, int damage)
     {
+        Id = id;
         Name = name;
         Damage = damage;
     }

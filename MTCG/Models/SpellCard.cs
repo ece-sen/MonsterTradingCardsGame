@@ -4,7 +4,7 @@ public class SpellCard : Card
 {
     public ElementType EffectType { get; set; }
 
-    public SpellCard(string name, int damage, ElementType effectType) : base(name, damage)
+    public SpellCard(string id, string name, int damage, ElementType effectType) : base(id, name, damage)
     {
         EffectType = effectType;
     }

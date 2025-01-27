@@ -118,23 +118,42 @@ namespace MTCG.Server
             
         }
 
-        public void AddCardToPackage(string? id, string? name, double damage)
+        public void AddCardToPackage(string packageId, string cardId, string name, double damage)
         {
             lock (_dbLock)
             {
-                const string query = @"
-                    INSERT INTO cards (id, name, damage) 
-                    VALUES (@id, @name, @damage)";
+                // Insert card into the `cards` table
+                const string cardQuery = @"
+            INSERT INTO cards (id, name, damage)
+            VALUES (@id, @name, @damage)
+            ON CONFLICT (id) DO NOTHING;"; // Avoid duplicates
+
+                // Link the card to the package in the `packages` table
+                const string packageQuery = @"
+            INSERT INTO packages (package_id, card_id)
+            VALUES (@package_id, @card_id);";
+
                 using var connection = GetConnection();
                 connection.Open();
-                using var command = new NpgsqlCommand(query, connection);
-                
-                command.Parameters.AddWithValue("@id", id);
-                command.Parameters.AddWithValue("@name", name);
-                command.Parameters.AddWithValue("@damage", damage);
-                
-                command.ExecuteNonQuery();
+
+                // Add the card to the `cards` table
+                using (var cardCommand = new NpgsqlCommand(cardQuery, connection))
+                {
+                    cardCommand.Parameters.AddWithValue("@id", Guid.Parse(cardId));
+                    cardCommand.Parameters.AddWithValue("@name", name);
+                    cardCommand.Parameters.AddWithValue("@damage", damage);
+                    cardCommand.ExecuteNonQuery();
+                }
+
+                // Link the card to the package
+                using (var packageCommand = new NpgsqlCommand(packageQuery, connection))
+                {
+                    packageCommand.Parameters.AddWithValue("@package_id", Guid.Parse(packageId));
+                    packageCommand.Parameters.AddWithValue("@card_id", Guid.Parse(cardId));
+                    packageCommand.ExecuteNonQuery();
+                }
             }
         }
+
     }
 }

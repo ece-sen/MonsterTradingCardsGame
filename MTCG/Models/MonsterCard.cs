@@ -4,8 +4,8 @@
     {
         public ElementType ElementType { get; set; }
 
-        public MonsterCard(string name, int damage, ElementType elementType)
-            : base(name, damage)
+        public MonsterCard(string id, string name, int damage, ElementType elementType)
+            : base(id, name, damage)
         {
             ElementType = elementType;
         }
