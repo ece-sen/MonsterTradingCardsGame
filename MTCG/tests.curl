@@ -320,8 +320,8 @@ if %pauseFlag%==1 pause
 
 REM --------------------------------------------------
 echo 17) battle
-start /b "kienboec battle" curl -i -X POST http://localhost:10001/battles --header "Authorization: Bearer kienboec-mtcgToken"
-start /b "altenhof battle" curl -i -X POST http://localhost:10001/battles --header "Authorization: Bearer altenhof-mtcgToken"
+start /b "kienboec battle" curl -i -X POST http://localhost:10001/battles --header "Authorization: Bearer g3kvJ9EhL09ZEKrL3wuDqikz"
+start /b "altenhof battle" curl -i -X POST http://localhost:10001/battles --header "Authorization: Bearer 7K9Tv3EpFXsVAyLbCWy84DjN"
 ping localhost -n 10 >NUL 2>NUL
 
 if %pauseFlag%==1 pause
