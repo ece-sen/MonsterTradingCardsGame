@@ -87,7 +87,9 @@ namespace MTCG.Server
                         elo = reader.GetInt32(3),
                         Name = reader.IsDBNull(4) ? "" : reader.GetString(4),
                         Bio = reader.IsDBNull(5) ? "" : reader.GetString(5),
-                        Image = reader.IsDBNull(6) ? "" : reader.GetString(6)
+                        Image = reader.IsDBNull(6) ? "" : reader.GetString(6),
+                        Wins = reader.IsDBNull(7) ? 0 : reader.GetInt32(7),
+                        Losses = reader.IsDBNull(8) ? 0 : reader.GetInt32(8),
                     };
                 }
             }
@@ -440,6 +442,6 @@ namespace MTCG.Server
                 return users;
             }
         }
-
+        
     }
 }
