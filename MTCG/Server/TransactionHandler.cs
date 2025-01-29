@@ -30,21 +30,19 @@ public class TransactionHandler : Handler, IHandler
             }
 
             string username = auth.User.UserName;
-
             DBHandler dbHandler = new();
 
-            // Deduct 5 coins from the user
-            dbHandler.DeductCoins(username, 5);
-
-            // Fetch the first available package
+            // Check if there are available packages BEFORE deducting coins
             string packageId = dbHandler.GetAvailablePackage();
             if (string.IsNullOrEmpty(packageId))
             {
                 status = HttpStatusCode.NOT_FOUND;
                 reply["message"] = "No packages available.";
                 e.Reply(status, reply.ToJsonString());
-                return true;
+                return true; // RETURN before deducting coins
             }
+            // Deduct 5 coins ONLY if package exists
+            dbHandler.DeductCoins(username, 5);
 
             // Assign the package to the user
             dbHandler.AssignPackageToUser(username, packageId);

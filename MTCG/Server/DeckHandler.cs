@@ -76,62 +76,78 @@ namespace MTCG.Server
             e.Reply(status, reply.ToJsonString());
             return true;
         }
+        
         private bool DefineDeck(HttpSvrEventArgs e)
+{
+    JsonObject reply = new() { ["success"] = false, ["message"] = "Invalid request" };
+    int status = HttpStatusCode.BAD_REQUEST;
+
+    try
+    {
+        // Authenticate the user
+        (bool Success, User? User) auth = Token.Authenticate(e);
+        if (!auth.Success || auth.User is null)
         {
-            JsonObject reply = new() { ["success"] = false, ["message"] = "Invalid request" };
-            int status = HttpStatusCode.BAD_REQUEST;
-
-            try
-            {
-                // Authenticate the user
-                (bool Success, User? User) auth = Token.Authenticate(e);
-                if (!auth.Success || auth.User is null)
-                {
-                    status = HttpStatusCode.UNAUTHORIZED;
-                    reply["message"] = "Unauthorized: Invalid token.";
-                    e.Reply(status, reply.ToJsonString());
-                    return true;
-                }
-
-                string username = auth.User.UserName;
-
-                // Parse the payload
-                JsonNode? payload = JsonNode.Parse(e.Payload);
-                if (payload is null || !payload.AsArray().Any())
-                {
-                    status = HttpStatusCode.BAD_REQUEST;
-                    reply["message"] = "Invalid payload.";
-                    e.Reply(status, reply.ToJsonString());
-                    return true;
-                }
-
-                List<string> cardIds = payload.AsArray().Select(x => x.ToString()).ToList();
-                if (cardIds.Count != 4)
-                {
-                    status = HttpStatusCode.BAD_REQUEST;
-                    reply["message"] = "A deck must consist of exactly 4 cards.";
-                    e.Reply(status, reply.ToJsonString());
-                    return true;
-                }
-
-                // Define the deck
-                DBHandler dbHandler = new();
-                dbHandler.DefineDeck(username, cardIds);
-
-                status = HttpStatusCode.OK;
-                reply["success"] = true;
-                reply["message"] = "Deck successfully updated.";
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine($"Error defining deck: {ex.Message}");
-                status = HttpStatusCode.NOT_FOUND;
-                reply["message"] = $"Error: {ex.Message}";
-            }
-
+            status = HttpStatusCode.UNAUTHORIZED;
+            reply["message"] = "Unauthorized: Invalid token.";
             e.Reply(status, reply.ToJsonString());
             return true;
         }
+
+        string username = auth.User.UserName;
+
+        // Parse the payload
+        JsonNode? payload = JsonNode.Parse(e.Payload);
+        if (payload is null || !payload.AsArray().Any())
+        {
+            status = HttpStatusCode.BAD_REQUEST;
+            reply["message"] = "Invalid payload.";
+            e.Reply(status, reply.ToJsonString());
+            return true;
+        }
+
+        List<string> cardIds = payload.AsArray().Select(x => x.ToString()).ToList();
+        if (cardIds.Count != 4)
+        {
+            status = HttpStatusCode.BAD_REQUEST;
+            reply["message"] = "A deck must consist of exactly 4 cards.";
+            e.Reply(status, reply.ToJsonString());
+            return true;
+        }
+
+        DBHandler dbHandler = new();
+
+        // ✅ Step 1: Validate all cards first (DO NOT reset the deck yet)
+        foreach (var cardId in cardIds)
+        {
+            if (!dbHandler.CardBelongsToUser(username, cardId))
+            {
+                status = HttpStatusCode.NOT_FOUND;
+                reply["message"] = $"Error: Card {cardId} does not belong to user {username} or does not exist.";
+                e.Reply(status, reply.ToJsonString());
+                return true; // ✅ Deck is not cleared!
+            }
+        }
+
+        // ✅ Step 2: If all checks pass, reset and update the deck
+        dbHandler.ResetDeck(username);
+        dbHandler.DefineDeck(username, cardIds);
+
+        status = HttpStatusCode.OK;
+        reply["success"] = true;
+        reply["message"] = "Deck successfully updated.";
+    }
+    catch (Exception ex)
+    {
+        Console.WriteLine($"Error defining deck: {ex.Message}");
+        status = HttpStatusCode.INTERNAL_SERVER_ERROR;
+        reply["message"] = $"Error: {ex.Message}";
+    }
+
+    e.Reply(status, reply.ToJsonString());
+    return true;
+}
+
 
         private bool GetDeck(HttpSvrEventArgs e)
         {

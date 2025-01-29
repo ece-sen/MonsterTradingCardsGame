@@ -56,6 +56,7 @@ namespace MTCG.Server
         
         public int elo { get; set; }
         
+        public string Name { get; set; } = string.Empty; // New field
         public string Bio { get; set; } = string.Empty;  // New field
         public string Image { get; set; } = string.Empty; // New field
 
@@ -82,12 +83,13 @@ namespace MTCG.Server
                 Password = password,
                 coins = 20,
                 elo = 100,
+                Name = "",
                 Bio = "",
                 Image = ""
           
             }; 
             DBHandler dbHandler = new DBHandler();
-            dbHandler.CreateUser(userName, password, 20, 100, "", "");
+            dbHandler.CreateUser(userName, password, 20, 100, "", "", "");
         }
 
         /// <summary>Gets a user by user name.</summary>

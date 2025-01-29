@@ -87,6 +87,16 @@ namespace MTCG.Server
                 // Parse the username from the URL
                 string userName = e.Path[7..];
                 Console.WriteLine($"Fetching details for user: {userName}");
+                
+                // ✅ Step 3: Ensure the authenticated user is requesting their own data
+                if (!ses.User.UserName.Equals(userName, StringComparison.OrdinalIgnoreCase))
+                {
+                    status = HttpStatusCode.UNAUTHORIZED;
+                    reply["message"] = "You are not allowed to view this user's information.";
+                    e.Reply(status, reply.ToJsonString());
+                    return true;
+                }
+
 
                 // Retrieve user from the database
                 DBHandler dbHandler = new DBHandler();
@@ -104,8 +114,11 @@ namespace MTCG.Server
                     {
                         ["success"] = true,
                         ["username"] = user.UserName,
+                        ["name"] = user.Name,
                         ["coins"] = user.coins,
-                        ["elo"] = user.elo
+                        ["elo"] = user.elo,
+                        ["Bio"] = user.Bio,
+                        ["Image"] = user.Image,
                     };
                 }
             }
@@ -140,11 +153,11 @@ namespace MTCG.Server
                     e.Reply(status, reply.ToJsonString());
                     return true;
                 }
-
-                string oldUserName = e.Path[7..];
                 
-                // ENSURE USER CAN ONLY UPDATE THEIR OWN PROFILE
-                if (!ses.User.UserName.Equals(oldUserName, StringComparison.OrdinalIgnoreCase))
+                string userName = e.Path[7..];
+                
+                // Ensure users can only update their own profile
+                if (!ses.User.UserName.Equals(userName, StringComparison.OrdinalIgnoreCase))
                 {
                     status = HttpStatusCode.UNAUTHORIZED;
                     reply["message"] = "You can only update your own profile.";
@@ -160,16 +173,16 @@ namespace MTCG.Server
                     e.Reply(status, reply.ToJsonString());
                     return true;
                 }
-
-                string? newUserName = json["Name"]?.GetValue<string>();
-                string? password = json["password"]?.GetValue<string>();
-                int? coins = json["coins"]?.GetValue<int?>();
-                int? elo = json["elo"]?.GetValue<int?>();
+                
+                string? newName = json["Name"]?.GetValue<string>();
+                string? newPassword = json["Password"]?.GetValue<string>();
+                int? coins = json["Coins"]?.GetValue<int?>();
+                int? elo = json["Elo"]?.GetValue<int?>();
                 string? bio = json["Bio"]?.GetValue<string>();
                 string? image = json["Image"]?.GetValue<string>();
 
                 DBHandler dbHandler = new DBHandler();
-                dbHandler.UpdateUser(oldUserName, newUserName, password, coins, elo, bio, image);
+                dbHandler.UpdateUser(userName, newName, newPassword, coins, elo, bio, image); // Username remains the same
 
                 status = HttpStatusCode.OK;
                 reply["success"] = true;

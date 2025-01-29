@@ -23,7 +23,7 @@ namespace MTCG.Server
         /// Create a new user in the database.
         /// </summary>
         private static readonly object _dbLock = new();
-        public void CreateUser(string userName, string password, int coins, int elo, string bio, string image)
+        public void CreateUser(string userName, string password, int coins, int elo, string Name, string bio, string image)
         {
             lock (_dbLock)
             {
@@ -40,6 +40,7 @@ namespace MTCG.Server
                             cmd.Parameters.AddWithValue("password", password);
                             cmd.Parameters.AddWithValue("coins", coins);
                             cmd.Parameters.AddWithValue("elo", elo);
+                            cmd.Parameters.AddWithValue("Name", Name?? "");
                             cmd.Parameters.AddWithValue("bio", bio?? "");
                             cmd.Parameters.AddWithValue("image", image?? "");
 
@@ -67,7 +68,7 @@ namespace MTCG.Server
         {
             lock (_dbLock)
             {
-                const string query = "SELECT username, password, coins, elo, bio, image FROM users WHERE username = @username;";
+                const string query = "SELECT username, password, coins, elo, name, bio, image FROM users WHERE username = @username;";
 
                 using var connection = GetConnection();
                 connection.Open();
@@ -84,8 +85,9 @@ namespace MTCG.Server
                         Password = reader.GetString(1),
                         coins = reader.GetInt32(2),
                         elo = reader.GetInt32(3),
-                        Bio = reader.IsDBNull(4) ? "" : reader.GetString(4),
-                        Image = reader.IsDBNull(5) ? "" : reader.GetString(5)
+                        Name = reader.IsDBNull(4) ? "" : reader.GetString(4),
+                        Bio = reader.IsDBNull(5) ? "" : reader.GetString(5),
+                        Image = reader.IsDBNull(6) ? "" : reader.GetString(6)
                     };
                 }
             }
@@ -96,77 +98,65 @@ namespace MTCG.Server
         /// <summary>
         /// Update user information with optional fields.
         /// </summary>
-        public void UpdateUser(string oldUserName, string? newUserName = null, string? password = null, int? coins = null, int? elo = null, string? bio = null, string? image = null)
+        public void UpdateUser(string username, string? newName = null, string? password = null, int? coins = null, int? elo = null, string? bio = null, string? image = null)
         {
             lock (_dbLock)
             {
                 using var connection = GetConnection();
                 connection.Open();
-                
+
 
                 // Fetch current values first
-                const string selectQuery = "SELECT username, password, coins, elo, bio, image FROM users WHERE username = @username;";
-                string currentUserName = oldUserName;
+                const string selectQuery =
+                    "SELECT name, password, coins, elo, bio, image FROM users WHERE username = @username;";
+                string currentName = "";
                 string currentPassword = "";
                 int currentCoins = 0, currentElo = 0;
                 string currentBio = "", currentImage = "";
 
-            using (var selectCommand = new NpgsqlCommand(selectQuery, connection))
-            {
-                selectCommand.Parameters.AddWithValue("@username", oldUserName);
-                using var reader = selectCommand.ExecuteReader();
-                if (reader.Read())
+                using (var selectCommand = new NpgsqlCommand(selectQuery, connection))
                 {
-                    currentUserName = reader.GetString(0);
-                    currentPassword = reader.IsDBNull(1) ? "" : reader.GetString(1);
-                    currentCoins = reader.GetInt32(2);
-                    currentElo = reader.GetInt32(3);
-                    currentBio = reader.IsDBNull(4) ? "" : reader.GetString(4);
-                    currentImage = reader.IsDBNull(5) ? "" : reader.GetString(5);
+                    selectCommand.Parameters.AddWithValue("@username", username);
+                    using var reader = selectCommand.ExecuteReader();
+                    if (reader.Read())
+                    {
+                        currentName = reader.IsDBNull(0) ? "" : reader.GetString(0);
+                        currentPassword = reader.IsDBNull(1) ? "" : reader.GetString(1);
+                        currentCoins = reader.GetInt32(2);
+                        currentElo = reader.GetInt32(3);
+                        currentBio = reader.IsDBNull(4) ? "" : reader.GetString(4);
+                        currentImage = reader.IsDBNull(5) ? "" : reader.GetString(5);
+                    }
+                    else
+                    {
+                        throw new Exception($"User '{username}' not found.");
+                    }
                 }
-                else
-                {
-                    throw new Exception($"User '{oldUserName}' not found.");
-                }
-            }
 
-            // Use existing values if new ones are not provided
-            newUserName??= currentUserName;
-            password ??= currentPassword;
-            coins ??= currentCoins;
-            elo ??= currentElo;
-            bio ??= currentBio;
-            image ??= currentImage;
+                // Use existing values if new ones are not provided
+                newName ??= currentName;
+                password ??= currentPassword;
+                coins ??= currentCoins;
+                elo ??= currentElo;
+                bio ??= currentBio;
+                image ??= currentImage;
 
-            // If username is being changed, update it separately
-            if (!oldUserName.Equals(newUserName, StringComparison.OrdinalIgnoreCase))
-            {
-                const string updateUsernameQuery = "UPDATE users SET username = @newUsername WHERE username = @oldUsername;";
-                using var updateUsernameCommand = new NpgsqlCommand(updateUsernameQuery, connection);
-                updateUsernameCommand.Parameters.AddWithValue("@newUsername", newUserName);
-                updateUsernameCommand.Parameters.AddWithValue("@oldUsername", oldUserName);
-                int rowsAffected = updateUsernameCommand.ExecuteNonQuery();
-                if (rowsAffected == 0)
-                {
-                    throw new Exception($"Failed to update username from '{oldUserName}' to '{newUserName}'.");
-                }
-            }
+                // Update all user attributes except Username
+                const string updateQuery = @"
+                UPDATE users 
+                SET name = @name, password = @password, coins = @coins, elo = @elo, bio = @bio, image = @image 
+                WHERE username = @username;";
 
-            // Update the remaining user details
-            const string updateQuery = @"
-            UPDATE users 
-            SET password = @password, coins = @coins, elo = @elo, bio = @bio, image = @image 
-            WHERE username = @username;";
+                using var updateCommand = new NpgsqlCommand(updateQuery, connection);
+                updateCommand.Parameters.AddWithValue("@username", username); // Username remains unchanged
+                updateCommand.Parameters.AddWithValue("@name", newName);
+                updateCommand.Parameters.AddWithValue("@password", password);
+                updateCommand.Parameters.AddWithValue("@coins", coins);
+                updateCommand.Parameters.AddWithValue("@elo", elo);
+                updateCommand.Parameters.AddWithValue("@bio", bio);
+                updateCommand.Parameters.AddWithValue("@image", image);
 
-            using var updateCommand = new NpgsqlCommand(updateQuery, connection);
-            updateCommand.Parameters.AddWithValue("@username", newUserName);
-            updateCommand.Parameters.AddWithValue("@password", password);
-            updateCommand.Parameters.AddWithValue("@coins", coins);
-            updateCommand.Parameters.AddWithValue("@elo", elo);
-            updateCommand.Parameters.AddWithValue("@bio", bio);
-            updateCommand.Parameters.AddWithValue("@image", image);
-
-            updateCommand.ExecuteNonQuery();
+                updateCommand.ExecuteNonQuery();
             }
         }
 
@@ -323,45 +313,6 @@ namespace MTCG.Server
                 return cards;
             }
         }
-        public void DefineDeck(string username, List<string> cardIds)
-        {
-            lock (_dbLock)
-            {
-                const string resetDeckQuery = @"
-            UPDATE cards
-            SET in_deck = FALSE
-            WHERE owner = @username;";
-
-                const string setDeckQuery = @"
-            UPDATE cards
-            SET in_deck = TRUE
-            WHERE id = @card_id AND owner = @username;";
-
-                using var connection = GetConnection();
-                connection.Open();
-
-                // Reset all cards in the user's collection
-                using (var resetCommand = new NpgsqlCommand(resetDeckQuery, connection))
-                {
-                    resetCommand.Parameters.AddWithValue("@username", username);
-                    resetCommand.ExecuteNonQuery();
-                }
-
-                // Set the new deck
-                foreach (var cardId in cardIds)
-                {
-                    using var setDeckCommand = new NpgsqlCommand(setDeckQuery, connection);
-                    setDeckCommand.Parameters.AddWithValue("@card_id", Guid.Parse(cardId));
-                    setDeckCommand.Parameters.AddWithValue("@username", username);
-
-                    int rowsAffected = setDeckCommand.ExecuteNonQuery();
-                    if (rowsAffected == 0)
-                    {
-                        throw new Exception($"Card {cardId} does not belong to user {username} or does not exist.");
-                    }
-                }
-            }
-        }
         public List<Card> GetDeck(string username)
         {
             lock (_dbLock)
@@ -401,5 +352,71 @@ namespace MTCG.Server
                 return deck;
             }
         }
+        
+        public bool CardBelongsToUser(string username, string cardId)
+        {
+            lock (_dbLock)
+            {
+                const string query = @"
+        SELECT COUNT(*) FROM cards 
+        WHERE id = @cardId AND owner = @username;";
+
+                using var connection = GetConnection();
+                connection.Open();
+
+                using var command = new NpgsqlCommand(query, connection);
+                command.Parameters.AddWithValue("@cardId", Guid.Parse(cardId));
+                command.Parameters.AddWithValue("@username", username);
+
+                int count = Convert.ToInt32(command.ExecuteScalar());
+                return count > 0; // ✅ True if card exists & belongs to user
+            }
+        }
+        
+        public void DefineDeck(string username, List<string> cardIds)
+        {
+            lock (_dbLock)
+            {
+                const string query = @"
+        UPDATE cards 
+        SET in_deck = TRUE 
+        WHERE id = @cardId AND owner = @username;";
+
+                using var connection = GetConnection();
+                connection.Open();
+
+                foreach (var cardId in cardIds)
+                {
+                    using var command = new NpgsqlCommand(query, connection);
+                    command.Parameters.AddWithValue("@cardId", Guid.Parse(cardId));
+                    command.Parameters.AddWithValue("@username", username);
+
+                    int rowsAffected = command.ExecuteNonQuery();
+                    if (rowsAffected == 0)
+                    {
+                        throw new Exception($"Card {cardId} does not belong to user {username} or does not exist.");
+                    }
+                }
+            }
+        }
+        
+        public void ResetDeck(string username)
+        {
+            lock (_dbLock)
+            {
+                const string query = @"
+        UPDATE cards 
+        SET in_deck = FALSE 
+        WHERE owner = @username;";
+
+                using var connection = GetConnection();
+                connection.Open();
+
+                using var command = new NpgsqlCommand(query, connection);
+                command.Parameters.AddWithValue("@username", username);
+                command.ExecuteNonQuery();
+            }
+        }
+
     }
 }
