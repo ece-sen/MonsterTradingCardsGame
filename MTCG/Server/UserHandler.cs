@@ -37,8 +37,8 @@ namespace MTCG.Server
                 JsonNode? json = JsonNode.Parse(e.Payload);
                 if (json != null)
                 {
-                    string username = (string)json["username"]!;
-                    string password = (string)json["password"]!;
+                    string username = (string)json["Username"]!;
+                    string password = (string)json["Password"]!;
 
                     User.Create(username, password);
                     status = HttpStatusCode.CREATED; // HTTP 201
@@ -125,7 +125,7 @@ namespace MTCG.Server
         /// </summary>
         /// <param name="e">Event arguments.</param>
         /// <returns>Returns TRUE.</returns>
-        private static bool _UpdateUser(HttpSvrEventArgs e)
+        private bool _UpdateUser(HttpSvrEventArgs e)
         {
             JsonObject? reply = new JsonObject { ["success"] = false, ["message"] = "Invalid request." };
             int status = HttpStatusCode.BAD_REQUEST;
@@ -136,44 +136,55 @@ namespace MTCG.Server
                 if (!ses.Success)
                 {
                     status = HttpStatusCode.UNAUTHORIZED;
-                    reply = new JsonObject { ["success"] = false, ["message"] = "Unauthorized." };
+                    reply["message"] = "Unauthorized.";
                     e.Reply(status, reply.ToJsonString());
                     return true;
                 }
 
+                string oldUserName = e.Path[7..];
+                
+                // ENSURE USER CAN ONLY UPDATE THEIR OWN PROFILE
+                if (!ses.User.UserName.Equals(oldUserName, StringComparison.OrdinalIgnoreCase))
+                {
+                    status = HttpStatusCode.UNAUTHORIZED;
+                    reply["message"] = "You can only update your own profile.";
+                    e.Reply(status, reply.ToJsonString());
+                    return true;
+                }
 
-                // Parse the username from the URL
-                string userName = e.Path[7..];
-                Console.WriteLine($"Parsed username: {userName}");
-
-                // Parse and validate the payload
                 JsonNode? json = JsonNode.Parse(e.Payload);
                 if (json == null)
                 {
                     status = HttpStatusCode.BAD_REQUEST;
+                    reply["message"] = "Invalid JSON payload.";
                     e.Reply(status, reply.ToJsonString());
                     return true;
                 }
 
-                string password = (string)json["password"]!;
-                int coins = (int)json["coins"]!;
-                int elo = (int)json["elo"]!;
+                string? newUserName = json["Name"]?.GetValue<string>();
+                string? password = json["password"]?.GetValue<string>();
+                int? coins = json["coins"]?.GetValue<int?>();
+                int? elo = json["elo"]?.GetValue<int?>();
+                string? bio = json["Bio"]?.GetValue<string>();
+                string? image = json["Image"]?.GetValue<string>();
 
-                // Update the user in the database
                 DBHandler dbHandler = new DBHandler();
-                dbHandler.UpdateUser(userName, password, coins, elo);
+                dbHandler.UpdateUser(oldUserName, newUserName, password, coins, elo, bio, image);
 
                 status = HttpStatusCode.OK;
-                reply = new JsonObject { ["success"] = true, ["message"] = "User updated successfully." };
+                reply["success"] = true;
+                reply["message"] = "User updated successfully.";
             }
             catch (Exception ex)
             {
-                reply = new JsonObject { ["success"] = false, ["message"] = ex.Message };
+                reply["message"] = ex.Message;
             }
 
-            e.Reply(status, reply?.ToJsonString());
+            e.Reply(status, reply.ToJsonString());
             return true;
         }
+
+
         
         private static bool _Logon(HttpSvrEventArgs e)
         {
@@ -184,15 +195,15 @@ namespace MTCG.Server
             {
                 // Parse the login credentials from the request payload
                 JsonNode? json = JsonNode.Parse(e.Payload);
-                if (json == null || json["username"] == null || json["password"] == null)
+                if (json == null || json["Username"] == null || json["Password"] == null)
                 {
                     reply["message"] = "Missing username or password.";
                     e.Reply(status, reply.ToJsonString());
                     return true;
                 }
 
-                string username = (string)json["username"]!;
-                string password = (string)json["password"]!;
+                string username = (string)json["Username"]!;
+                string password = (string)json["Password"]!;
 
                 // Validate credentials
                 DBHandler dbHandler = new DBHandler();

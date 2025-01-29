@@ -19,6 +19,10 @@ namespace MTCG.Server
 
         /// <summary>Token dictionary.</summary>
         internal static ConcurrentDictionary<string, User> _Tokens = new();
+        
+        /// <summary>Username-to-token mapping for managing single token per user.</summary>
+        private static ConcurrentDictionary<string, string> _UserTokens = new();
+
 
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // private static methods                                                                                           //
@@ -31,6 +35,9 @@ namespace MTCG.Server
         {
             string token;
             Random rnd = new();
+            
+            // Invalidate the existing token for this user, if any
+            InvalidateTokenForUser(user.UserName);
 
             do
             {
@@ -38,7 +45,10 @@ namespace MTCG.Server
                 token = string.Concat(Enumerable.Range(0, 24).Select(_ => _ALPHABET[rnd.Next(_ALPHABET.Length)]));
             }
             while (!_Tokens.TryAdd(token, user)); // Ensure the token is unique and successfully added
-
+            
+            // Map the new token to the username
+            _UserTokens[user.UserName] = token;
+            
             return token;
         }
 
@@ -96,7 +106,34 @@ namespace MTCG.Server
         /// <returns>True if the token was removed successfully, otherwise false.</returns>
         public static bool RemoveToken(string token)
         {
-            return _Tokens.TryRemove(token, out _);
+            if (_Tokens.TryRemove(token, out var user))
+            {
+                if (user != null)
+                {
+                    _UserTokens.TryRemove(user.UserName, out _);
+                }
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>Invalidates the current token for the specified user.</summary>
+        /// <param name="username">Username.</param>
+        private static void InvalidateTokenForUser(string username)
+        {
+            // Check if a token exists for the user
+            if (_UserTokens.TryGetValue(username, out var existingToken))
+            {
+                // Remove the token from the dictionaries
+                RemoveToken(existingToken);
+            }
+        }
+
+        /// <summary>Invalidates all tokens (useful for cleanup or session termination).</summary>
+        public static void InvalidateAllTokens()
+        {
+            _Tokens.Clear();
+            _UserTokens.Clear();
         }
     }
 }

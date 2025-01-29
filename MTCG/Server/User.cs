@@ -55,6 +55,9 @@ namespace MTCG.Server
         public int coins { get; set; }
         
         public int elo { get; set; }
+        
+        public string Bio { get; set; } = string.Empty;  // New field
+        public string Image { get; set; } = string.Empty; // New field
 
 
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -78,33 +81,14 @@ namespace MTCG.Server
                 UserName = userName,
                 Password = password,
                 coins = 20,
-                elo = 100
+                elo = 100,
+                Bio = "",
+                Image = ""
           
             }; 
             DBHandler dbHandler = new DBHandler();
-            dbHandler.CreateUser(userName, password, 20, 100);
+            dbHandler.CreateUser(userName, password, 20, 100, "", "");
         }
-        
-        public void Save(string token)
-        {
-            (bool Success, User? User) auth = Token.Authenticate(token);
-            if (auth.Success)
-            {
-                if (auth.User!.UserName != UserName)
-                {
-                    throw new SecurityException("Trying to change other user's data.");
-                }
-
-                // Call the DBHandler to persist changes
-                DBHandler dbHandler = new DBHandler();
-                dbHandler.UpdateUser(UserName, Password, coins, elo);
-            }
-            else
-            {
-                throw new AuthenticationException("Not authenticated.");
-            }
-        }
-
 
         /// <summary>Gets a user by user name.</summary>
         /// <param name="userName">User name.</param>

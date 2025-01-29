@@ -53,8 +53,8 @@ namespace MTCG.Server
                         }
         
                         // Validate required fields
-                        string? username = json["username"]?.ToString();
-                        string? password = json["password"]?.ToString();
+                        string? username = json["Username"]?.ToString();
+                        string? password = json["Password"]?.ToString();
         
                         if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
                         {

@@ -47,7 +47,7 @@ namespace MTCG.Server
             if (Active) return;
 
             Active = true;
-            _Listener = new TcpListener(IPAddress.Parse("127.0.0.1"), 12000);
+            _Listener = new TcpListener(IPAddress.Parse("127.0.0.1"), 10001);
             _Listener.Start();
 
             Console.WriteLine("Server is running...");
