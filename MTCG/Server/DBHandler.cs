@@ -417,6 +417,29 @@ namespace MTCG.Server
                 command.ExecuteNonQuery();
             }
         }
+        public List<User> GetUsersSortedByELO()
+        {
+            lock (_dbLock)
+            {
+                const string query = "SELECT username, elo FROM users ORDER BY elo DESC;";
+
+                using var connection = GetConnection();
+                connection.Open();
+                using var command = new NpgsqlCommand(query, connection);
+                using var reader = command.ExecuteReader();
+
+                List<User> users = new();
+                while (reader.Read())
+                {
+                    users.Add(new User
+                    {
+                        UserName = reader.GetString(0),
+                        elo = reader.GetInt32(1)
+                    });
+                }
+                return users;
+            }
+        }
 
     }
 }
