@@ -1,11 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text.Json.Nodes;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using System.Text.Json.Nodes;
 using MTCG.Models;
-using MTCG.Server;
+
+namespace MTCG.Server;
 
 public class BattleHandler : Handler, IHandler
 {
@@ -113,6 +109,9 @@ public class BattleHandler : Handler, IHandler
 
     private void ResolveRound(Card card1, Card card2, List<Card> deck1, List<Card> deck2)
     {
+        // for unique feature
+        Random rng = new Random();
+        
         // Special Cases:
         if (card1 is MonsterCard goblin && card2 is MonsterCard dragon1 && goblin.Name.Contains("Goblin") && dragon1.Name.Contains("Dragon"))
         {
@@ -148,7 +147,23 @@ public class BattleHandler : Handler, IHandler
         // Normal Round Resolution
         double damage1 = ApplyElementEffect(card1, card2);
         double damage2 = ApplyElementEffect(card2, card1);
+        
+        // Simple Critical Hit Feature (10% chance for each card)
+        bool crit1 = rng.Next(1, 101) <= 10;
+        bool crit2 = rng.Next(1, 101) <= 10;
+        
+        if (crit1)
+        {
+            damage1 *= 2;
+            battleList.Add($"CRITICAL HIT! {card1.Name} deals double damage ({damage1}) to {card2.Name}!");
+        }
 
+        if (crit2)
+        {
+            damage2 *= 2;
+            battleList.Add($"CRITICAL HIT! {card2.Name} deals double damage ({damage2}) to {card1.Name}!");
+        }
+        
         if (damage1 > damage2)
         {
             deck2.Remove(card2);
