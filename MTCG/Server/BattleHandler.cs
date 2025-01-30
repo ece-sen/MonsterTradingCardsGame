@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
 using MTCG.Models;
@@ -10,6 +11,8 @@ public class BattleHandler : Handler, IHandler
 {
     private static readonly object _battleLock = new();
     private static Queue<string> _battleQueue = new();
+    public List<String> battleList = new();
+
 
     public override bool Handle(HttpSvrEventArgs e)
     {
@@ -37,28 +40,40 @@ public class BattleHandler : Handler, IHandler
             if (_battleQueue.Count == 0)
             {
                 _battleQueue.Enqueue(username);
-                Console.WriteLine($"{username} is waiting for an opponent...");
+                battleList.Add($"{username} is waiting for an opponent...");
                 Monitor.Wait(_battleLock);
             }
             else
             {
                 string opponent = _battleQueue.Dequeue();
                 Monitor.Pulse(_battleLock);
-                Task.Run(() => RunBattle(username, opponent, dbHandler));
+                RunBattle(username, opponent, dbHandler);
             }
         }
+
+        // Now battleList is fully updated before sending reply
+        var reply = new JsonObject()
+        {
+            ["success"] = true,
+            ["message"] = "Battle has finished.",
+            ["battle_log"] = new JsonArray(battleList.Select(log => JsonValue.Create(log)).ToArray())
+        };
+
+        var status = HttpStatusCode.OK;
+        e.Reply(status, reply.ToString()); // Send the final battle log
         return true;
     }
 
     private void RunBattle(string player1, string player2, DBHandler dbHandler)
     {
-        Console.WriteLine($"Battle started between {player1} and {player2}");
+        battleList.Add($"Battle started between {player1} and {player2}");
+        
         List<Card> deck1 = dbHandler.GetDeck(player1);
         List<Card> deck2 = dbHandler.GetDeck(player2);
     
         if (deck1.Count < 4 || deck2.Count < 4)
         {
-            Console.WriteLine("Both players must have 4 cards in their deck to battle.");
+            battleList.Add("Both players must have 4 cards in their deck to battle.");
             return;
         }
 
@@ -68,7 +83,7 @@ public class BattleHandler : Handler, IHandler
             rounds++;
             Card card1 = deck1[new Random().Next(deck1.Count)];
             Card card2 = deck2[new Random().Next(deck2.Count)];
-            Console.WriteLine($"Round {rounds}: {card1.Name} ({card1.Damage}) vs {card2.Name} ({card2.Damage})");
+            battleList.Add($"Round {rounds}: {card1.Name} ({card1.Damage}) vs {card2.Name} ({card2.Damage})");
             ResolveRound(card1, card2, deck1, deck2);
         }
 
@@ -85,11 +100,11 @@ public class BattleHandler : Handler, IHandler
             dbHandler.UpdateGameStats(winner, won: true, lost: false);
             dbHandler.UpdateGameStats(loser, won: false, lost: true);
 
-            Console.WriteLine($"Battle ended. Winner: {winner}");
+            battleList.Add($"Battle ended. Winner: {winner}");
         }
         else
         {
-            Console.WriteLine("The battle ended in a draw. No ELO changes.");
+            battleList.Add("The battle ended in a draw. No ELO changes.");
             dbHandler.UpdateGameStats(player1, won: false, lost: false);
             dbHandler.UpdateGameStats(player2, won: false, lost: false);
         }
@@ -101,32 +116,32 @@ public class BattleHandler : Handler, IHandler
         // Special Cases:
         if (card1 is MonsterCard goblin && card2 is MonsterCard dragon1 && goblin.Name.Contains("Goblin") && dragon1.Name.Contains("Dragon"))
         {
-            Console.WriteLine($"{card1.Name} is too afraid to attack {card2.Name}!");
+            battleList.Add($"{card1.Name} is too afraid to attack {card2.Name}!");
             return; // Goblin does nothing
         }
 
         if (card1 is MonsterCard ork && card2 is MonsterCard wizard && ork.Name.Contains("Ork") && wizard.Name.Contains("Wizard"))
         {
-            Console.WriteLine($"{card2.Name} controls {card1.Name}, preventing it from attacking!");
+            battleList.Add($"{card2.Name} controls {card1.Name}, preventing it from attacking!");
             return;
         }
 
         if (card1 is MonsterCard knight && card2 is SpellCard waterSpell && waterSpell.ElementType == ElementType.Water && knight.Name.Contains("Knight"))
         {
-            Console.WriteLine($"{card1.Name} drowns instantly due to {card2.Name}!");
+            battleList.Add($"{card1.Name} drowns instantly due to {card2.Name}!");
             deck1.Remove(card1);
             return;
         }
 
         if (card1 is MonsterCard kraken && card2 is SpellCard)
         {
-            Console.WriteLine($"{card1.Name} is immune to spells!");
+            battleList.Add($"{card1.Name} is immune to spells!");
             return;
         }
 
         if (card1 is MonsterCard fireElf && card2 is MonsterCard dragon && fireElf.Name.Contains("FireElf") && dragon.Name.Contains("Dragon"))
         {
-            Console.WriteLine($"{card1.Name} evades {card2.Name}'s attack!");
+            battleList.Add($"{card1.Name} evades {card2.Name}'s attack!");
             return;
         }
 
