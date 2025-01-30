@@ -417,6 +417,28 @@ namespace MTCG.Server
                 command.ExecuteNonQuery();
             }
         }
-        
+        public void UpdateGameStats(string username, bool won, bool lost)
+        {
+            lock (_dbLock)
+            {
+                using var connection = GetConnection();
+                connection.Open();
+
+                const string query = @"
+            UPDATE users 
+            SET games_played = games_played + 1,
+                wins = wins + CASE WHEN @won THEN 1 ELSE 0 END,
+                losses = losses + CASE WHEN @lost THEN 1 ELSE 0 END
+            WHERE username = @username;";
+
+                using var command = new NpgsqlCommand(query, connection);
+                command.Parameters.AddWithValue("@username", username);
+                command.Parameters.AddWithValue("@won", won);
+                command.Parameters.AddWithValue("@lost", lost);
+
+                command.ExecuteNonQuery();
+            }
+        }
+
     }
 }

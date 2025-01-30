@@ -55,7 +55,7 @@ public class BattleHandler : Handler, IHandler
         Console.WriteLine($"Battle started between {player1} and {player2}");
         List<Card> deck1 = dbHandler.GetDeck(player1);
         List<Card> deck2 = dbHandler.GetDeck(player2);
-        
+    
         if (deck1.Count < 4 || deck2.Count < 4)
         {
             Console.WriteLine("Both players must have 4 cards in their deck to battle.");
@@ -72,20 +72,67 @@ public class BattleHandler : Handler, IHandler
             ResolveRound(card1, card2, deck1, deck2);
         }
 
-        string winner = deck1.Count > deck2.Count ? player1 : player2;
-        string loser = winner == player1 ? player2 : player1;
-        
-        dbHandler.UpdateUser(winner, elo: dbHandler.GetUser(winner)?.elo + 3);
-        dbHandler.UpdateUser(loser, elo: dbHandler.GetUser(loser)?.elo - 5);
-        Console.WriteLine($"Battle ended. Winner: {winner}");
+        bool isDraw = deck1.Count == deck2.Count;
+
+        if (!isDraw)
+        {
+            string winner = deck1.Count > deck2.Count ? player1 : player2;
+            string loser = winner == player1 ? player2 : player1;
+
+            dbHandler.UpdateUser(winner, elo: dbHandler.GetUser(winner)?.elo + 3);
+            dbHandler.UpdateUser(loser, elo: dbHandler.GetUser(loser)?.elo - 5);
+
+            dbHandler.UpdateGameStats(winner, won: true, lost: false);
+            dbHandler.UpdateGameStats(loser, won: false, lost: true);
+
+            Console.WriteLine($"Battle ended. Winner: {winner}");
+        }
+        else
+        {
+            Console.WriteLine("The battle ended in a draw. No ELO changes.");
+            dbHandler.UpdateGameStats(player1, won: false, lost: false);
+            dbHandler.UpdateGameStats(player2, won: false, lost: false);
+        }
     }
+
 
     private void ResolveRound(Card card1, Card card2, List<Card> deck1, List<Card> deck2)
     {
+        // Special Cases:
+        if (card1 is MonsterCard goblin && card2 is MonsterCard dragon1 && goblin.Name.Contains("Goblin") && dragon1.Name.Contains("Dragon"))
+        {
+            Console.WriteLine($"{card1.Name} is too afraid to attack {card2.Name}!");
+            return; // Goblin does nothing
+        }
+
+        if (card1 is MonsterCard ork && card2 is MonsterCard wizard && ork.Name.Contains("Ork") && wizard.Name.Contains("Wizard"))
+        {
+            Console.WriteLine($"{card2.Name} controls {card1.Name}, preventing it from attacking!");
+            return;
+        }
+
+        if (card1 is MonsterCard knight && card2 is SpellCard waterSpell && waterSpell.ElementType == ElementType.Water && knight.Name.Contains("Knight"))
+        {
+            Console.WriteLine($"{card1.Name} drowns instantly due to {card2.Name}!");
+            deck1.Remove(card1);
+            return;
+        }
+
+        if (card1 is MonsterCard kraken && card2 is SpellCard)
+        {
+            Console.WriteLine($"{card1.Name} is immune to spells!");
+            return;
+        }
+
+        if (card1 is MonsterCard fireElf && card2 is MonsterCard dragon && fireElf.Name.Contains("FireElf") && dragon.Name.Contains("Dragon"))
+        {
+            Console.WriteLine($"{card1.Name} evades {card2.Name}'s attack!");
+            return;
+        }
+
+        // Normal Round Resolution
         double damage1 = ApplyElementEffect(card1, card2);
         double damage2 = ApplyElementEffect(card2, card1);
-        
-        Console.WriteLine($"{card1.Name} ({damage1}) vs {card2.Name} ({damage2})");
 
         if (damage1 > damage2)
         {
@@ -98,6 +145,7 @@ public class BattleHandler : Handler, IHandler
             deck2.Add(card1);
         }
     }
+
 
     private double ApplyElementEffect(Card attacker, Card defender)
     {
