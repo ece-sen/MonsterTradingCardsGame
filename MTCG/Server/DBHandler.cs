@@ -439,6 +439,37 @@ namespace MTCG.Server
                 command.ExecuteNonQuery();
             }
         }
+        public List<User> GetScoreboard()
+        {
+            lock (_dbLock)
+            {
+                const string query = @"
+            SELECT username, elo, games_played, wins, losses 
+            FROM users 
+            ORDER BY elo DESC, wins DESC, games_played ASC;";
+
+                using var connection = GetConnection();
+                connection.Open();
+
+                using var command = new NpgsqlCommand(query, connection);
+                using var reader = command.ExecuteReader();
+
+                List<User> scoreboard = new();
+                while (reader.Read())
+                {
+                    scoreboard.Add(new User
+                    {
+                        UserName = reader.GetString(0),
+                        elo = reader.GetInt32(1),
+                        games_played = reader.GetInt32(2),
+                        wins = reader.GetInt32(3),
+                        losses = reader.GetInt32(4)
+                    });
+                }
+
+                return scoreboard;
+            }
+        }
 
     }
 }

@@ -59,6 +59,10 @@ namespace MTCG.Server
         public string Name { get; set; } = string.Empty; // New field
         public string Bio { get; set; } = string.Empty;  // New field
         public string Image { get; set; } = string.Empty; // New field
+        
+        public int games_played { get; set; } = 0;
+        public int wins { get; set; } = 0;
+        public int losses { get; set; } = 0;
 
 
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
