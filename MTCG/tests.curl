@@ -92,7 +92,7 @@ if %pauseFlag%==1 pause
 
 REM --------------------------------------------------
 echo 4) acquire packages kienboec
-curl -i -X POST http://localhost:10001/transactions/packages --header "Content-Type: application/json" --header "Authorization: Bearer 666il4Y7jGuRCqsY5Bncptqx" -d ""
+curl -i -X POST http://localhost:10001/transactions/packages --header "Content-Type: application/json" --header "Authorization: Bearer R8V3bfF8Tx15B0jqveKEOgzR" -d ""
 echo "Should return HTTP 201"
 echo.
 curl -i -X POST http://localhost:10001/transactions/packages --header "Content-Type: application/json" --header "Authorization: Bearer 666il4Y7jGuRCqsY5Bncptqx" -d ""
