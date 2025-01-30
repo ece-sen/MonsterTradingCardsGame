@@ -8,9 +8,16 @@ namespace MTCG.Server
     {
         private readonly string _connectionString;
 
-        public DBHandler()
+        public DBHandler(bool useTestDb = false)
         {
-            _connectionString = "Host=localhost;Username=swen1;Password=swen1;Database=swen1";
+            if (useTestDb)  // for unit tests
+            {
+                _connectionString = "Host=localhost;Username=swen1;Password=swen1;Database=swen1_test";
+            }
+            else
+            {
+                _connectionString = "Host=localhost;Username=swen1;Password=swen1;Database=swen1";
+            }
         }
 
         // Open a connection to the database

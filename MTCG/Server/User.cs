@@ -115,7 +115,7 @@ namespace MTCG.Server
         public static (bool Success, string Token) Logon(string userName, string password)
         {
             // Retrieve the user from the database
-            DBHandler dbHandler = new DBHandler();
+            DBHandler dbHandler = new DBHandler(useTestDb: true);
             User? user = dbHandler.GetUser(userName);
 
             if (user != null)
