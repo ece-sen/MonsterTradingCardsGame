@@ -35,7 +35,7 @@ namespace MTCG.Server
         // public properties                                                                                                //
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        /// <summary>Gets the user name.</summary>
+        /// <summary>Gets the username.</summary>
         public string UserName
         {
             get;
@@ -96,7 +96,7 @@ namespace MTCG.Server
             dbHandler.CreateUser(userName, password, 20, 100, "", "", "");
         }
 
-        /// <summary>Gets a user by user name.</summary>
+        /// <summary>Gets a user by username.</summary>
         /// <param name="userName">User name.</param>
         /// <returns>Return a user object if the user was found, otherwise returns NULL.</returns>
         public static User? Get(string userName) 
@@ -115,7 +115,7 @@ namespace MTCG.Server
         public static (bool Success, string Token) Logon(string userName, string password)
         {
             // Retrieve the user from the database
-            DBHandler dbHandler = new DBHandler(useTestDb: true);
+            DBHandler dbHandler = new DBHandler();
             User? user = dbHandler.GetUser(userName);
 
             if (user != null)

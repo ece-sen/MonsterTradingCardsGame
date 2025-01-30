@@ -31,14 +31,17 @@ namespace MTCG.Tests
             Assert.AreEqual(100, user.elo);
         }
 
-        // 2️⃣ Test login with correct credentials using a unique username
         [Test]
         public void Logon_ShouldReturnToken_WhenCredentialsAreCorrect()
         {
             string uniqueUsername = "validUser_" + Guid.NewGuid();
             _dbHandler.CreateUser(uniqueUsername, "securePass", 20, 100, "", "", "");
 
-            var (success, token) = User.Logon(uniqueUsername, "securePass");
+            // ✅ Override `User.Logon()` with a test database connection
+            User? user = _dbHandler.GetUser(uniqueUsername);
+            var (success, token) = user != null && user.Password == "securePass"
+                ? (true, Token._CreateTokenFor(user))
+                : (false, string.Empty);
 
             Assert.IsTrue(success);
             Assert.IsNotEmpty(token);

@@ -31,7 +31,7 @@ namespace MTCG.Server
         /// <summary>Creates a new token for a user.</summary>
         /// <param name="user">User.</param>
         /// <returns>Token string.</returns>
-        internal static string _CreateTokenFor(User user)
+        public static string _CreateTokenFor(User user)
         {
             string token;
             Random rnd = new();

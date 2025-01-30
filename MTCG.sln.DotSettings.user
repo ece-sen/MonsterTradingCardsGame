@@ -12,5 +12,16 @@
     &lt;TestId&gt;NUnit3x::C09ACB4E-FBBA-4EB0-B6F4-9B8DB9FF2698::net8.0::MTCG.Tests.UserTests.Logon_ShouldFail_WhenPasswordIsIncorrect&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;NUnit3x::C09ACB4E-FBBA-4EB0-B6F4-9B8DB9FF2698::net8.0::MTCG.Tests.UserTests.GetUser_ShouldReturnNull_WhenUserDoesNotExist&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;NUnit3x::C09ACB4E-FBBA-4EB0-B6F4-9B8DB9FF2698::net8.0::MTCG.Tests.UserTests.UpdateUser_ShouldModifyCoinsAndElo&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::C09ACB4E-FBBA-4EB0-B6F4-9B8DB9FF2698::net8.0::MTCG.Tests.CardTests.MonsterCard_ShouldAssignCorrectElementType&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::C09ACB4E-FBBA-4EB0-B6F4-9B8DB9FF2698::net8.0::MTCG.Tests.CardTests.SpellCard_ShouldAssignCorrectElementType&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::C09ACB4E-FBBA-4EB0-B6F4-9B8DB9FF2698::net8.0::MTCG.Tests.CardTests.MonsterCard_DisplayInfo_ShouldOutputCorrectInfo&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::C09ACB4E-FBBA-4EB0-B6F4-9B8DB9FF2698::net8.0::MTCG.Tests.CardTests.AddCard_ShouldStoreCardInDatabase&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::C09ACB4E-FBBA-4EB0-B6F4-9B8DB9FF2698::net8.0::MTCG.Tests.CardTests.AddPackage_ShouldStoreFiveCardsInDatabase&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::C09ACB4E-FBBA-4EB0-B6F4-9B8DB9FF2698::net8.0::MTCG.Tests.CardTests.CardBelongsToUser_ShouldReturnFalseForWrongUser&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::C09ACB4E-FBBA-4EB0-B6F4-9B8DB9FF2698::net8.0::MTCG.Tests.CardTests.SpellCard_DisplayInfo_ShouldOutputCorrectInfo&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::C09ACB4E-FBBA-4EB0-B6F4-9B8DB9FF2698::net8.0::MTCG.Tests.CardTests.GetUserCards_ShouldReturnEmptyForNonexistentUser&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::C09ACB4E-FBBA-4EB0-B6F4-9B8DB9FF2698::net8.0::MTCG.Tests.TransactionTests&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::C09ACB4E-FBBA-4EB0-B6F4-9B8DB9FF2698::net8.0::MTCG.Tests.CardTests&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::C09ACB4E-FBBA-4EB0-B6F4-9B8DB9FF2698::net8.0::MTCG.Tests.UserTests&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>
