@@ -87,9 +87,7 @@ namespace MTCG.Server
                         elo = reader.GetInt32(3),
                         Name = reader.IsDBNull(4) ? "" : reader.GetString(4),
                         Bio = reader.IsDBNull(5) ? "" : reader.GetString(5),
-                        Image = reader.IsDBNull(6) ? "" : reader.GetString(6),
-                        Wins = reader.IsDBNull(7) ? 0 : reader.GetInt32(7),
-                        Losses = reader.IsDBNull(8) ? 0 : reader.GetInt32(8),
+                        Image = reader.IsDBNull(6) ? "" : reader.GetString(6)
                     };
                 }
             }
@@ -417,29 +415,6 @@ namespace MTCG.Server
                 using var command = new NpgsqlCommand(query, connection);
                 command.Parameters.AddWithValue("@username", username);
                 command.ExecuteNonQuery();
-            }
-        }
-        public List<User> GetUsersSortedByELO()
-        {
-            lock (_dbLock)
-            {
-                const string query = "SELECT username, elo FROM users ORDER BY elo DESC;";
-
-                using var connection = GetConnection();
-                connection.Open();
-                using var command = new NpgsqlCommand(query, connection);
-                using var reader = command.ExecuteReader();
-
-                List<User> users = new();
-                while (reader.Read())
-                {
-                    users.Add(new User
-                    {
-                        UserName = reader.GetString(0),
-                        elo = reader.GetInt32(1)
-                    });
-                }
-                return users;
             }
         }
         
