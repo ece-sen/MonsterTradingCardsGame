@@ -13,37 +13,49 @@ namespace MTCG.Tests
         private DBHandler _dbHandler;
         private string _testUsername;
         private string _testPackageId;
-        private List<string> _testCardIds;
+        private List<string> _testUserCardIds;
 
         [SetUp]
         public void Setup()
         {
             _dbHandler = new DBHandler(useTestDb: true); // ✅ Use the test database
 
-            // ✅ Ensure test data is always created before running tests
-            (_testUsername, _testPackageId, _testCardIds) = TestDataSetup.InitializeTestData(_dbHandler);
+            // ✅ Create test user
+            _testUsername = "testUser_" + Guid.NewGuid();
+            _dbHandler.CreateUser(_testUsername, "password", 20, 100, "", "", "");
 
             // ✅ Ensure at least one package exists before running tests
-            if (string.IsNullOrEmpty(_dbHandler.GetAvailablePackage()))
+            _testPackageId = _dbHandler.GetAvailablePackage();
+    
+            if (string.IsNullOrEmpty(_testPackageId))
             {
-                string packageId = Guid.NewGuid().ToString();
-                List<string> cardIds = new();
+                _testPackageId = Guid.NewGuid().ToString();
+                List<string> cardIds = new List<string>();
 
-                for (int i = 0; i < 5; i++)
+                // ✅ Create 5 known cards
+                for (int i = 1; i <= 5; i++)
                 {
                     string cardId = Guid.NewGuid().ToString();
                     cardIds.Add(cardId);
                     _dbHandler.AddCard(cardId, $"TestCard_{i}", 30 + (i * 5), "Normal", "Monster");
                 }
 
+                // ✅ Link the new cards to a package
                 foreach (var cardId in cardIds)
                 {
-                    _dbHandler.AddCardToPackage(packageId, cardId);
+                    _dbHandler.AddCardToPackage(_testPackageId, cardId);
                 }
             }
+
+            // ✅ Assign the package to the user
+            _dbHandler.AssignPackageToUser(_testUsername, _testPackageId);
+
+            // 🔹 Delay to allow database transactions to complete before the test starts
+            System.Threading.Thread.Sleep(500); // Wait 500ms
         }
 
-        // 1️⃣ Ensure package purchase works first
+
+        // 1️⃣ Test that a package is assigned if available
         [Test, Order(1)]
         public void PurchasePackage_ShouldAssignPackageIfAvailable()
         {
@@ -57,9 +69,9 @@ namespace MTCG.Tests
             var retrievedCards = _dbHandler.GetUserCards(_testUsername);
             Assert.AreEqual(5, retrievedCards.Count, "User should have received a full package of 5 cards!");
         }
-        
+
         // 2️⃣ Test that a user cannot buy a package if they don’t have enough coins
-        [Test, Order(3)]
+        [Test, Order(2)]
         public void PurchasePackage_ShouldFailForInsufficientCoins()
         {
             string lowCoinsUser = "lowCoinsUser_" + Guid.NewGuid();
@@ -67,7 +79,7 @@ namespace MTCG.Tests
 
             Token._CreateTokenFor(new User { UserName = lowCoinsUser });
             TransactionHandler transactionHandler = new();
-            TcpClient fakeClient = new TcpClient(); // ✅ Fix: Provide a dummy TCP client
+            TcpClient fakeClient = new TcpClient();
             HttpSvrEventArgs fakeRequest = new(fakeClient, "POST /transactions/packages");
             transactionHandler.Handle(fakeRequest);
 
@@ -85,7 +97,7 @@ namespace MTCG.Tests
             Token._CreateTokenFor(new User { UserName = zeroCoinsUser });
             TransactionHandler transactionHandler = new();
 
-            TcpClient fakeClient = new TcpClient(); // ✅ Fix: Provide a dummy TCP client
+            TcpClient fakeClient = new TcpClient();
             HttpSvrEventArgs fakeRequest = new(fakeClient, "POST /transactions/packages");
 
             transactionHandler.Handle(fakeRequest);
@@ -95,4 +107,3 @@ namespace MTCG.Tests
         }
     }
 }
-

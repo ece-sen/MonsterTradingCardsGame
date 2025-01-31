@@ -14,18 +14,26 @@ namespace MTCG.Tests
         [SetUp]
         public void Setup()
         {
-            _dbHandler = new DBHandler(useTestDb: true); // ✅ Use the test database
+            _dbHandler = new DBHandler(useTestDb: true);
         }
 
-        // 1️⃣ Test that the scoreboard orders users by Elo rating
+        private void EnsureUserExists(string username, int elo)
+        {
+            var user = _dbHandler.GetUser(username);
+            if (user == null)
+            {
+                _dbHandler.CreateUser(username, "password", 20, elo, "", "", "");
+            }
+        }
+
         [Test]
         public void Scoreboard_ShouldOrderUsersByElo()
         {
-            string user1 = "user1_" + Guid.NewGuid();
-            string user2 = "user2_" + Guid.NewGuid();
+            string user1 = "user1_test";
+            string user2 = "user2_test";
 
-            _dbHandler.CreateUser(user1, "password", 20, 300, "", "", ""); // Higher Elo
-            _dbHandler.CreateUser(user2, "password", 20, 250, "", "", ""); // Lower Elo
+            EnsureUserExists(user1, 500); // Ensure user1 exists with 500 Elo
+            EnsureUserExists(user2, 400); // Ensure user2 exists with 400 Elo
 
             var scoreboard = _dbHandler.GetScoreboard();
 

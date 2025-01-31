@@ -120,7 +120,11 @@ namespace MTCG.Server
                 }
 
                 byte[] buf = Encoding.UTF8.GetBytes(data);
-                _Client.GetStream().Write(buf, 0, buf.Length);
+                if (_Client?.Connected == true) // ✅ Check if the client is still connected
+                {
+                    _Client.GetStream().Write(buf, 0, buf.Length);
+                    _Client.GetStream().Flush(); // ✅ Ensure all data is sent
+                }
             }
             catch (Exception ex)
             {
@@ -128,7 +132,13 @@ namespace MTCG.Server
             }
             finally
             {
-                _Client.Close();
+                // ✅ Delay before closing to ensure response is fully sent
+                System.Threading.Thread.Sleep(200); 
+
+                if (_Client?.Connected == true)
+                {
+                    _Client.Close();
+                }
                 _Client.Dispose();
             }
         }
