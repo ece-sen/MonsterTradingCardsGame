@@ -82,5 +82,18 @@ namespace MTCG.Tests
             Assert.AreEqual(50, user.coins);
             Assert.AreEqual(200, user.elo);
         }
+        // 6️⃣ Test that a user cannot be created with a duplicate username
+        [Test]
+        public void CreateUser_ShouldFail_WhenUsernameAlreadyExists()
+        {
+            string duplicateUsername = "duplicateUser_" + Guid.NewGuid();
+            _dbHandler.CreateUser(duplicateUsername, "password", 20, 100, "", "", "");
+
+            // Attempt to create the same user again
+            Assert.Throws<Exception>(() =>
+            {
+                _dbHandler.CreateUser(duplicateUsername, "newpassword", 50, 200, "", "", "");
+            }, "User creation should fail when the username already exists.");
+        }
     }
 }
