@@ -7,15 +7,15 @@ namespace MTCG.Server
         public override bool Handle(HttpSvrEventArgs e)
         {
             if ((e.Path.TrimEnd('/', ' ', '\t') == "/users") && (e.Method == "POST"))
-            { // POST /users will create a user object
+            { 
                 return _CreateUser(e);
             }
             else if (e.Path.StartsWith("/users/") && (e.Method == "GET"))
-            { // GET /users/UserName will query a user
+            {
                 return _QueryUser(e);
             }
             else if (e.Path.StartsWith("/users/") && (e.Method == "PUT"))
-            { // PUT /users/UserName will update a user
+            { 
                 return _UpdateUser(e);
             }
             else if ((e.Path.TrimEnd('/', ' ', '\t') == "/sessions") && (e.Method == "POST"))
@@ -40,20 +40,19 @@ namespace MTCG.Server
                     string password = (string)json["Password"]!;
 
                     User.Create(username, password);
-                    status = HttpStatusCode.CREATED; // HTTP 201
+                    status = HttpStatusCode.CREATED; 
                     reply = new JsonObject { ["success"] = true, ["message"] = "User created." };
                 }
             }
             catch (Exception ex)
             {
-                // Check the exception message to customize the status code
                 if (ex.Message == "User name already exists.")
                 {
-                    status = HttpStatusCode.CONFLICT; // HTTP 409
+                    status = HttpStatusCode.CONFLICT; 
                 }
                 else
                 {
-                    status = HttpStatusCode.INTERNAL_SERVER_ERROR; // HTTP 500
+                    status = HttpStatusCode.INTERNAL_SERVER_ERROR; 
                 }
 
                 reply = new JsonObject { ["success"] = false, ["message"] = ex.Message };
@@ -71,7 +70,6 @@ namespace MTCG.Server
 
             try
             {
-                // Authenticate the request
                 (bool Success, User? User) ses = Token.Authenticate(e);
                 Console.WriteLine($"Token Authentication Success: {ses.Success}");
 
@@ -83,11 +81,10 @@ namespace MTCG.Server
                     return true;
                 }
 
-                // Parse the username from the URL
                 string userName = e.Path[7..];
                 Console.WriteLine($"Fetching details for user: {userName}");
                 
-                // ✅ Step 3: Ensure the authenticated user is requesting their own data
+                // Check if authenticated user is requesting their own data
                 if (!ses.User.UserName.Equals(userName, StringComparison.OrdinalIgnoreCase))
                 {
                     status = HttpStatusCode.UNAUTHORIZED;
@@ -95,7 +92,6 @@ namespace MTCG.Server
                     e.Reply(status, reply.ToJsonString());
                     return true;
                 }
-
 
                 // Retrieve user from the database
                 DBHandler dbHandler = new DBHandler();
@@ -114,8 +110,8 @@ namespace MTCG.Server
                         ["success"] = true,
                         ["username"] = user.UserName,
                         ["name"] = user.Name,
-                        ["coins"] = user.coins,
-                        ["elo"] = user.elo,
+                        ["coins"] = user.Coins,
+                        ["elo"] = user.Elo,
                         ["Bio"] = user.Bio,
                         ["Image"] = user.Image,
                     };
@@ -130,8 +126,7 @@ namespace MTCG.Server
             e.Reply(status, reply.ToJsonString());
             return true;
         }
-
-
+        
         /// <summary>
         /// Updates a user.
         /// </summary>
@@ -181,7 +176,7 @@ namespace MTCG.Server
                 string? image = json["Image"]?.GetValue<string>();
 
                 DBHandler dbHandler = new DBHandler();
-                dbHandler.UpdateUser(userName, newName, newPassword, coins, elo, bio, image); // Username remains the same
+                dbHandler.UpdateUser(userName, newName, newPassword, coins, elo, bio, image);
 
                 status = HttpStatusCode.OK;
                 reply["success"] = true;
@@ -195,8 +190,6 @@ namespace MTCG.Server
             e.Reply(status, reply.ToJsonString());
             return true;
         }
-
-
         
         private static bool _Logon(HttpSvrEventArgs e)
         {
@@ -205,7 +198,6 @@ namespace MTCG.Server
 
             try
             {
-                // Parse the login credentials from the request payload
                 JsonNode? json = JsonNode.Parse(e.Payload);
                 if (json == null || json["Username"] == null || json["Password"] == null)
                 {

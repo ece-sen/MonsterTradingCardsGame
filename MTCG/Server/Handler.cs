@@ -12,18 +12,8 @@ namespace MTCG.Server
     /// available handlers.</summary>
     public abstract class Handler: IHandler
     {
-        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // private members                                                                                                  //
-        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        
         /// <summary>List of available handlers.</summary>
         private static List<IHandler>? _Handlers = null;
-
-        
-
-        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // private static methods                                                                                           //
-        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         
         /// <summary>Discovers and returns all available handler implementations.</summary>
         /// <returns>Returns a list of available handlers.</returns>
@@ -44,12 +34,6 @@ namespace MTCG.Server
 
             return rval;
         }
-
-
-
-        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // public static methods                                                                                            //
-        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         
         /// <summary>Handles an incoming HTTP request.</summary>
         /// <param name="e">Event arguments.</param>
@@ -64,9 +48,7 @@ namespace MTCG.Server
                                                                                 // reply 400 if no handler was able to process the request
             e.Reply(HttpStatusCode.BAD_REQUEST, new JsonObject() { ["success"] = false, ["message"] = "Bad request" }.ToJsonString());
         }
-
-
-
+        
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // [interface] IHandler                                                                                             //
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

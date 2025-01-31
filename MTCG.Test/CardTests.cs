@@ -18,8 +18,8 @@ namespace MTCG.Tests
         [SetUp]
         public void Setup()
         {
-            _dbHandler = new DBHandler(useTestDb: true); // Use test database
-            (_testUsername, _testPackageId, _testCardIds) = TestDataSetup.InitializeTestData(_dbHandler); // ✅ Use shared test data
+            _dbHandler = new DBHandler(useTestDb: true); 
+            (_testUsername, _testPackageId, _testCardIds) = TestDataSetup.InitializeTestData(_dbHandler); 
         }
 
         // Test to assign right element to a monster card

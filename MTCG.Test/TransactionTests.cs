@@ -18,13 +18,13 @@ namespace MTCG.Tests
         [SetUp]
         public void Setup()
         {
-            _dbHandler = new DBHandler(useTestDb: true); // ✅ Use the test database
+            _dbHandler = new DBHandler(useTestDb: true); 
 
-            // ✅ Create test user
+            // Create test user
             _testUsername = "testUser_" + Guid.NewGuid();
             _dbHandler.CreateUser(_testUsername, "password", 20, 100, "", "", "");
 
-            // ✅ Ensure at least one package exists before running tests
+            // Ensure at least one package exists before running tests
             _testPackageId = _dbHandler.GetAvailablePackage();
     
             if (string.IsNullOrEmpty(_testPackageId))
@@ -32,7 +32,7 @@ namespace MTCG.Tests
                 _testPackageId = Guid.NewGuid().ToString();
                 List<string> cardIds = new List<string>();
 
-                // ✅ Create 5 known cards
+                // Create 5 cards and add to a package
                 for (int i = 1; i <= 5; i++)
                 {
                     string cardId = Guid.NewGuid().ToString();
@@ -40,22 +40,21 @@ namespace MTCG.Tests
                     _dbHandler.AddCard(cardId, $"TestCard_{i}", 30 + (i * 5), "Normal", "Monster");
                 }
 
-                // ✅ Link the new cards to a package
+                //new cards to a package
                 foreach (var cardId in cardIds)
                 {
                     _dbHandler.AddCardToPackage(_testPackageId, cardId);
                 }
             }
 
-            // ✅ Assign the package to the user
+            // Assign the package to the user
             _dbHandler.AssignPackageToUser(_testUsername, _testPackageId);
-
-            // 🔹 Delay to allow database transactions to complete before the test starts
+            
             System.Threading.Thread.Sleep(500); // Wait 500ms
         }
 
 
-        // 1️⃣ Test that a package is assigned if available
+        // Test that a package is assigned if available
         [Test, Order(1)]
         public void PurchasePackage_ShouldAssignPackageIfAvailable()
         {
@@ -70,7 +69,7 @@ namespace MTCG.Tests
             Assert.AreEqual(5, retrievedCards.Count, "User should have received a full package of 5 cards!");
         }
 
-        // 2️⃣ Test that a user cannot buy a package if they don’t have enough coins
+        // a user cannot buy a package if they don’t have enough coins
         [Test, Order(2)]
         public void PurchasePackage_ShouldFailForInsufficientCoins()
         {
@@ -84,10 +83,10 @@ namespace MTCG.Tests
             transactionHandler.Handle(fakeRequest);
 
             var user = _dbHandler.GetUser(lowCoinsUser);
-            Assert.AreEqual(4, user.coins, "User should not have been able to buy a package!");
+            Assert.AreEqual(4, user.Coins, "User should not have been able to buy a package!");
         }
 
-        // 4️⃣ Test that a user with 0 coins cannot buy a package
+        // Test that a user with 0 coins cannot buy a package
         [Test, Order(4)]
         public void PurchasePackage_ShouldFailForZeroCoins()
         {
@@ -103,7 +102,7 @@ namespace MTCG.Tests
             transactionHandler.Handle(fakeRequest);
 
             var user = _dbHandler.GetUser(zeroCoinsUser);
-            Assert.AreEqual(0, user.coins, "User with 0 coins should not be able to buy a package!");
+            Assert.AreEqual(0, user.Coins, "User with 0 coins should not be able to buy a package!");
         }
     }
 }

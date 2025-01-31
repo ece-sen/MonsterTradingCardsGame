@@ -28,37 +28,16 @@ namespace MTCG.Server
         // private static methods                                                                                           //
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-        /// <summary>Creates a new token for a user.</summary>
+        /// <summary>Creates a new token for a user for given format: username-mtcgToken.</summary>
         /// <param name="user">User.</param>
         /// <returns>Token string.</returns>
         public static string _CreateTokenFor(User user)
         {
-            string token = $"{user.UserName}-mtcgToken"; // Token-Format: username-mtcgToken
+            string token = $"{user.UserName}-mtcgToken"; 
             _Tokens[token] = user;
             return token;
         }
-        /*
-        public static string _CreateTokenFor(User user)
-        {
-            string token;
-            Random rnd = new();
-            
-            // Invalidate the existing token for this user, if any
-            InvalidateTokenForUser(user.UserName);
-
-            do
-            {
-                // Generate a random 24-character token
-                token = string.Concat(Enumerable.Range(0, 24).Select(_ => _ALPHABET[rnd.Next(_ALPHABET.Length)]));
-            }
-            while (!_Tokens.TryAdd(token, user)); // Ensure the token is unique and successfully added
-            
-            // Map the new token to the username
-            _UserTokens[user.UserName] = token;
-            
-            return token;
-        }
-*/
+        
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // public static methods                                                                                            //
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -106,41 +85,6 @@ namespace MTCG.Server
             }
 
             return (false, null);                                               // "Authorization" header not found, authentication failed
-        }
-
-        /// <summary>Removes a token from the dictionary.</summary>
-        /// <param name="token">Token string.</param>
-        /// <returns>True if the token was removed successfully, otherwise false.</returns>
-        public static bool RemoveToken(string token)
-        {
-            if (_Tokens.TryRemove(token, out var user))
-            {
-                if (user != null)
-                {
-                    _UserTokens.TryRemove(user.UserName, out _);
-                }
-                return true;
-            }
-            return false;
-        }
-
-        /// <summary>Invalidates the current token for the specified user.</summary>
-        /// <param name="username">Username.</param>
-        private static void InvalidateTokenForUser(string username)
-        {
-            // Check if a token exists for the user
-            if (_UserTokens.TryGetValue(username, out var existingToken))
-            {
-                // Remove the token from the dictionaries
-                RemoveToken(existingToken);
-            }
-        }
-
-        /// <summary>Invalidates all tokens (useful for cleanup or session termination).</summary>
-        public static void InvalidateAllTokens()
-        {
-            _Tokens.Clear();
-            _UserTokens.Clear();
         }
     }
 }

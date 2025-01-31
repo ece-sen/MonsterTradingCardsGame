@@ -39,7 +39,7 @@ public class TransactionHandler : Handler, IHandler
                 status = HttpStatusCode.NOT_FOUND;
                 reply["message"] = "No packages available.";
                 e.Reply(status, reply.ToJsonString());
-                return true; // RETURN before deducting coins
+                return true; 
             }
             // Deduct 5 coins ONLY if package exists
             dbHandler.DeductCoins(username, 5);

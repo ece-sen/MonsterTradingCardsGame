@@ -2,8 +2,6 @@
 using System.Security;
 using System.Security.Authentication;
 
-
-
 namespace MTCG.Server
 {
     /// <summary>This class represents a user.</summary>
@@ -26,8 +24,7 @@ namespace MTCG.Server
         /// <summary>Creates a new instance of this class.</summary>
         public User()
         {}
-
-
+        
 
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // public properties                                                                                                //
@@ -39,9 +36,7 @@ namespace MTCG.Server
             get;
             set;
         } = string.Empty;
-
-
-
+        
 
         /// <summary>Gets or sets the user's password.</summary>
         public string Password
@@ -50,41 +45,27 @@ namespace MTCG.Server
             set;
         } = string.Empty;
         
-        public int coins { get; set; }
-        
-        public int elo { get; set; }
-        
-        public string Name { get; set; } = string.Empty; // New field
-        public string Bio { get; set; } = string.Empty;  // New field
-        public string Image { get; set; } = string.Empty; // New field
-        
-        public int games_played { get; set; } = 0;
-        public int wins { get; set; } = 0;
-        public int losses { get; set; } = 0;
-
-
-        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // public methods                                                                                                   //
-        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-
-
-        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        // public static methods                                                                                            //
-        //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+        public int Coins { get; set; }
+        public int Elo { get; set; }
+        public string Name { get; set; } = string.Empty; 
+        public string Bio { get; set; } = string.Empty;  
+        public string Image { get; set; } = string.Empty; 
+        public int GamesPlayed { get; set; } = 0;
+        public int Wins { get; set; } = 0;
+        public int Losses { get; set; } = 0;
         
         /// <summary>Creates a user.</summary>
         /// <param name="userName">User name.</param>
         /// <param name="password">Password.</param>
         /// <param name="fullName">Full name.</param>
-        /// <param name="eMail">E-mail addresss.</param>
         public static void Create(string userName, string password)
         {
             User user = new()
             {
                 UserName = userName,
                 Password = password,
-                coins = 20,
-                elo = 100,
+                Coins = 20,
+                Elo = 100,
                 Name = "",
                 Bio = "",
                 Image = ""

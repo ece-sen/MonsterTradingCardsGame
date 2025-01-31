@@ -23,9 +23,7 @@ namespace MTCG.Server
 
             return false;
         }
-
-
-
+        
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // public static methods                                                                                            //
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -42,57 +40,53 @@ namespace MTCG.Server
             lock (_tokensLock)
             {
                 try
+                {
+                    JsonNode? json = JsonNode.Parse(e.Payload);
+                    if (json == null)
                     {
-                        // Parse the request payload
-                        JsonNode? json = JsonNode.Parse(e.Payload);
-                        if (json == null)
-                        {
-                            reply["message"] = "Invalid JSON payload.";
-                            e.Reply(status, reply?.ToJsonString());
-                            return true;
-                        }
-        
-                        // Validate required fields
-                        string? username = json["Username"]?.ToString();
-                        string? password = json["Password"]?.ToString();
-        
-                        if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
-                        {
-                            reply["message"] = "Username or password is missing.";
-                            e.Reply(status, reply?.ToJsonString());
-                            return true;
-                        }
-        
-                        // Attempt logon
-                        var result = User.Logon(username, password);
-                        if (result.Success)
-                        {
-                            // Logon was successful
-                            status = HttpStatusCode.OK;
-                            reply = new JsonObject()
-                            {
-                                ["success"] = true,
-                                ["message"] = $"{username} authenticated successfully.",
-                                ["token"] = result.Token
-                            };
-                        }
-                        else
-                        {
-                            // Logon failed
-                            status = HttpStatusCode.UNAUTHORIZED;
-                            reply["message"] = "Invalid username or password.";
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        // Catch any unexpected exceptions and log them for debugging
-                        reply["message"] = $"Unexpected error: {ex.Message}";
+                        reply["message"] = "Invalid JSON payload.";
+                        e.Reply(status, reply?.ToJsonString());
+                        return true;
                     }
         
-                    // Send the reply
-                    e.Reply(status, reply?.ToJsonString());
-                    return true;
+                    // Check if required fields are valid
+                    string? username = json["Username"]?.ToString();
+                    string? password = json["Password"]?.ToString();
+        
+                    if (string.IsNullOrWhiteSpace(username) || string.IsNullOrWhiteSpace(password))
+                    {
+                        reply["message"] = "Username or password is missing.";
+                        e.Reply(status, reply?.ToJsonString());
+                        return true;
+                    }
+        
+                    // Attempt logon
+                    var result = User.Logon(username, password);
+                    if (result.Success)
+                    {
+                        // Logon was successful
+                        status = HttpStatusCode.OK;
+                        reply = new JsonObject()
+                        {
+                            ["success"] = true,
+                            ["message"] = $"{username} authenticated successfully.",
+                            ["token"] = result.Token
+                        };
+                    }
+                    else
+                    {
+                        // Logon failed
+                        status = HttpStatusCode.UNAUTHORIZED;
+                        reply["message"] = "Invalid username or password.";
+                    }
                 }
+                catch (Exception ex)
+                {
+                    reply["message"] = $"Unexpected error: {ex.Message}";
+                }
+                e.Reply(status, reply?.ToJsonString());
+                return true;
             }
+        }
         }
 }

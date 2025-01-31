@@ -29,7 +29,6 @@ namespace MTCG.Server
 
             try
             {
-                // Authenticate request
                 (bool Success, User? User) auth = Token.Authenticate(e);
                 if (!auth.Success || auth.User is null)
                 {
@@ -76,79 +75,75 @@ namespace MTCG.Server
             e.Reply(status, reply.ToJsonString());
             return true;
         }
-        
-        private bool DefineDeck(HttpSvrEventArgs e)
-{
-    JsonObject reply = new() { ["success"] = false, ["message"] = "Invalid request" };
-    int status = HttpStatusCode.BAD_REQUEST;
-
-    try
-    {
-        // Authenticate the user
-        (bool Success, User? User) auth = Token.Authenticate(e);
-        if (!auth.Success || auth.User is null)
+        private bool DefineDeck(HttpSvrEventArgs e) 
         {
-            status = HttpStatusCode.UNAUTHORIZED;
-            reply["message"] = "Unauthorized: Invalid token.";
-            e.Reply(status, reply.ToJsonString());
-            return true;
-        }
+            JsonObject reply = new() { ["success"] = false, ["message"] = "Invalid request" };
+            int status = HttpStatusCode.BAD_REQUEST;
 
-        string username = auth.User.UserName;
-
-        // Parse the payload
-        JsonNode? payload = JsonNode.Parse(e.Payload);
-        if (payload is null || !payload.AsArray().Any())
-        {
-            status = HttpStatusCode.BAD_REQUEST;
-            reply["message"] = "Invalid payload.";
-            e.Reply(status, reply.ToJsonString());
-            return true;
-        }
-
-        List<string> cardIds = payload.AsArray().Select(x => x.ToString()).ToList();
-        if (cardIds.Count != 4)
-        {
-            status = HttpStatusCode.BAD_REQUEST;
-            reply["message"] = "A deck must consist of exactly 4 cards.";
-            e.Reply(status, reply.ToJsonString());
-            return true;
-        }
-
-        DBHandler dbHandler = new();
-
-        // ✅ Step 1: Validate all cards first (DO NOT reset the deck yet)
-        foreach (var cardId in cardIds)
-        {
-            if (!dbHandler.CardBelongsToUser(username, cardId))
+            try
             {
-                status = HttpStatusCode.NOT_FOUND;
-                reply["message"] = $"Error: Card {cardId} does not belong to user {username} or does not exist.";
-                e.Reply(status, reply.ToJsonString());
-                return true; // ✅ Deck is not cleared!
+                (bool Success, User? User) auth = Token.Authenticate(e);
+                if (!auth.Success || auth.User is null)
+                {
+                    status = HttpStatusCode.UNAUTHORIZED;
+                    reply["message"] = "Unauthorized: Invalid token.";
+                    e.Reply(status, reply.ToJsonString());
+                    return true;
+                }
+
+                string username = auth.User.UserName;
+
+                JsonNode? payload = JsonNode.Parse(e.Payload);
+                if (payload is null || !payload.AsArray().Any())
+                {
+                    status = HttpStatusCode.BAD_REQUEST;
+                    reply["message"] = "Invalid payload.";
+                    e.Reply(status, reply.ToJsonString());
+                    return true;
+                }
+
+                List<string> cardIds = payload.AsArray().Select(x => x.ToString()).ToList();
+                if (cardIds.Count != 4)
+                {
+                    status = HttpStatusCode.BAD_REQUEST;
+                    reply["message"] = "A deck must consist of exactly 4 cards.";
+                    e.Reply(status, reply.ToJsonString());
+                    return true;
+                }
+
+                DBHandler dbHandler = new();
+
+                // Check if the card belongs to user's stack
+                foreach (var cardId in cardIds)
+                {
+                    if (!dbHandler.CardBelongsToUser(username, cardId))
+                    {
+                        status = HttpStatusCode.NOT_FOUND;
+                        reply["message"] = $"Error: Card {cardId} does not belong to user {username} or does not exist.";
+                        e.Reply(status, reply.ToJsonString());
+                        return true;
+                    }
+                }
+
+                // Update the deck with 4 cards
+                dbHandler.ResetDeck(username);
+                dbHandler.DefineDeck(username, cardIds);
+
+                status = HttpStatusCode.OK;
+                reply["success"] = true;
+                reply["message"] = "Deck successfully updated.";
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error defining deck: {ex.Message}");
+                status = HttpStatusCode.INTERNAL_SERVER_ERROR;
+                reply["message"] = $"Error: {ex.Message}";
+            }
+
+            e.Reply(status, reply.ToJsonString());
+            return true;
         }
-
-        // ✅ Step 2: If all checks pass, reset and update the deck
-        dbHandler.ResetDeck(username);
-        dbHandler.DefineDeck(username, cardIds);
-
-        status = HttpStatusCode.OK;
-        reply["success"] = true;
-        reply["message"] = "Deck successfully updated.";
-    }
-    catch (Exception ex)
-    {
-        Console.WriteLine($"Error defining deck: {ex.Message}");
-        status = HttpStatusCode.INTERNAL_SERVER_ERROR;
-        reply["message"] = $"Error: {ex.Message}";
-    }
-
-    e.Reply(status, reply.ToJsonString());
-    return true;
-}
-
-
+        
         private bool GetDeck(HttpSvrEventArgs e)
         {
             JsonObject reply = new() { ["success"] = false, ["message"] = "Invalid request" };
@@ -158,7 +153,6 @@ namespace MTCG.Server
             {
                 Console.WriteLine($"Requested Path: {e.Path}");
 
-                // Authenticate the user
                 (bool Success, User? User) auth = Token.Authenticate(e);
                 if (!auth.Success || auth.User is null)
                 {
@@ -174,17 +168,17 @@ namespace MTCG.Server
                 DBHandler dbHandler = new();
                 List<Card> deck = dbHandler.GetDeck(username);
                 
-                // Parse query parameters
                 string? queryString = e.Path.Contains('?') ? e.Path.Split('?')[1] : null;
                 bool isPlainFormat = queryString != null && queryString.Contains("format=plain", StringComparison.OrdinalIgnoreCase);
                 
+                // for debugging purposes
                 Console.WriteLine($"Query String: {queryString}");
                 Console.WriteLine($"Is Plain Format: {isPlainFormat}");
                 
                 // Check if plain format is requested
                 if (isPlainFormat)
                 {
-                    // Use StringWriter for thread-safe plain text generation
+                    // Use StringWriter for plain text generation
                     using (var plainTextResponse = new StringWriter())
                     {
                         plainTextResponse.WriteLine("Your Deck:");
@@ -197,7 +191,6 @@ namespace MTCG.Server
 
                             plainTextResponse.WriteLine($"- {card.Name} ({type}, {elementType}, Damage: {card.Damage})");
                         }
-
                         e.Reply(HttpStatusCode.OK, plainTextResponse.ToString());
                         return true;
                     }

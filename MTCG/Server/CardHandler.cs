@@ -22,7 +22,6 @@ namespace MTCG.Server
 
             try
             {
-                // Authenticate request
                 (bool Success, User? User) auth = Token.Authenticate(e);
                 if (!auth.Success || auth.User is null || auth.User.UserName != "admin")
                 {
@@ -31,8 +30,7 @@ namespace MTCG.Server
                     e.Reply(status, reply.ToJsonString());
                     return true;
                 }
-
-                // Parse payload
+                
                 JsonNode? payload = JsonNode.Parse(e.Payload);
                 if (payload is null || !payload.AsArray().Any())
                 {
@@ -66,7 +64,7 @@ namespace MTCG.Server
                     string type = card is SpellCard ? "Spell" : "Monster";
                     dbHandler.AddCard(id, name, damage, elementType, type);
 
-                    // Link card to the package
+                    // Add card to the package
                     dbHandler.AddCardToPackage(packageId, id);
                 }
 

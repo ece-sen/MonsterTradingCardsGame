@@ -1,4 +1,4 @@
-﻿﻿using System.Text.Json.Nodes;
+﻿using System.Text.Json.Nodes;
 using MTCG.Server;
 
 public class ScoreboardHandler : Handler, IHandler
@@ -19,7 +19,6 @@ public class ScoreboardHandler : Handler, IHandler
 
         try
         {
-            // Authenticate request
             (bool Success, User? User) auth = Token.Authenticate(e);
             if (!auth.Success || auth.User is null)
             {
@@ -38,10 +37,10 @@ public class ScoreboardHandler : Handler, IHandler
                 usersArray.Add(new JsonObject
                 {
                     ["username"] = user.UserName,
-                    ["elo"] = user.elo,
-                    ["games_played"] = user.games_played,
-                    ["wins"] = user.wins,
-                    ["losses"] = user.losses
+                    ["elo"] = user.Elo,
+                    ["games_played"] = user.GamesPlayed,
+                    ["wins"] = user.Wins,
+                    ["losses"] = user.Losses
                 });
             }
 

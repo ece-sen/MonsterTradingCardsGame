@@ -47,16 +47,16 @@ public class BattleHandler : Handler, IHandler
             }
         }
 
-        // Now battleList is fully updated before sending reply
         var reply = new JsonObject()
         {
             ["success"] = true,
             ["message"] = "Battle has finished.",
             ["battle_log"] = new JsonArray(battleList.Select(log => JsonValue.Create(log)).ToArray())
         };
-
+        
+        // Send the final battle log with http 200
         var status = HttpStatusCode.OK;
-        e.Reply(status, reply.ToString()); // Send the final battle log
+        e.Reply(status, reply.ToString()); 
         return true;
     }
 
@@ -90,8 +90,8 @@ public class BattleHandler : Handler, IHandler
             string winner = deck1.Count > deck2.Count ? player1 : player2;
             string loser = winner == player1 ? player2 : player1;
 
-            dbHandler.UpdateUser(winner, elo: dbHandler.GetUser(winner)?.elo + 3);
-            dbHandler.UpdateUser(loser, elo: dbHandler.GetUser(loser)?.elo - 5);
+            dbHandler.UpdateUser(winner, elo: dbHandler.GetUser(winner)?.Elo + 3);
+            dbHandler.UpdateUser(loser, elo: dbHandler.GetUser(loser)?.Elo - 5);
 
             dbHandler.UpdateGameStats(winner, won: true, lost: false);
             dbHandler.UpdateGameStats(loser, won: false, lost: true);
@@ -106,13 +106,12 @@ public class BattleHandler : Handler, IHandler
         }
     }
 
-
     private void ResolveRound(Card card1, Card card2, List<Card> deck1, List<Card> deck2)
     {
         // for unique feature
         Random rng = new Random();
         
-        // Special Cases:
+        // Special Cases
         if (card1 is MonsterCard goblin && card2 is MonsterCard dragon1 && goblin.Name.Contains("Goblin") && dragon1.Name.Contains("Dragon"))
         {
             battleList.Add($"{card1.Name} is too afraid to attack {card2.Name}!");
@@ -175,8 +174,7 @@ public class BattleHandler : Handler, IHandler
             deck2.Add(card1);
         }
     }
-
-
+    
     private double ApplyElementEffect(Card attacker, Card defender)
     {
         if (attacker is MonsterCard m1 && defender is MonsterCard m2)

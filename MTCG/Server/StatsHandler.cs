@@ -19,7 +19,6 @@ public class StatsHandler : Handler, IHandler
 
         try
         {
-            // Authenticate request
             (bool Success, User? User) auth = Token.Authenticate(e);
             if (!auth.Success || auth.User is null)
             {
@@ -42,13 +41,12 @@ public class StatsHandler : Handler, IHandler
                 return true;
             }
 
-            // Construct the response with user stats
             reply = new JsonObject
             {
                 ["success"] = true,
                 ["username"] = user.UserName,
-                ["elo"] = user.elo,
-                ["coins"] = user.coins
+                ["elo"] = user.Elo,
+                ["coins"] = user.Coins
             };
 
             status = HttpStatusCode.OK;

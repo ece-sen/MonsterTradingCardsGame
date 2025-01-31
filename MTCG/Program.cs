@@ -34,14 +34,14 @@ namespace MTCG
                 // Block the main thread and wait for shutdown signal
                 Console.CancelKeyPress += (_, e) =>
                 {
-                    e.Cancel = true; // Prevent the application from terminating immediately
+                    e.Cancel = true;
                     svr.Stop();
                 };
 
                 // Keep the application running until the server stops
                 while (svr.Active)
                 {
-                    Thread.Sleep(100); // Small delay to prevent CPU overutilization
+                    Thread.Sleep(100); 
                 }
             }
             catch (Exception ex)
@@ -59,10 +59,10 @@ namespace MTCG
         {
             try
             {
-                // Use the handler to process the request
+                // handler processes the request
                 Handler.HandleEvent(e);
 
-                // Optionally, add detailed logging for debugging
+                // detailed logging for debugging purposes
                 Console.WriteLine($"Request received:");
                 Console.WriteLine($"Method: {e.Method}");
                 Console.WriteLine($"Path: {e.Path}");

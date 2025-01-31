@@ -17,7 +17,7 @@ namespace MTCG.Tests
         }
 
 
-        // 1️⃣ Test user creation with unique usernames
+        // user creation with unique usernames
         [Test]
         public void CreateUser_ShouldStoreUserCorrectly()
         {
@@ -27,17 +27,17 @@ namespace MTCG.Tests
             var user = _dbHandler.GetUser(uniqueUsername);
             Assert.NotNull(user);
             Assert.AreEqual(uniqueUsername, user.UserName);
-            Assert.AreEqual(20, user.coins);
-            Assert.AreEqual(100, user.elo);
+            Assert.AreEqual(20, user.Coins);
+            Assert.AreEqual(100, user.Elo);
         }
 
+        // correct credentials logon
         [Test]
         public void Logon_ShouldReturnToken_WhenCredentialsAreCorrect()
         {
             string uniqueUsername = "validUser_" + Guid.NewGuid();
             _dbHandler.CreateUser(uniqueUsername, "securePass", 20, 100, "", "", "");
 
-            // ✅ Override `User.Logon()` with a test database connection
             User? user = _dbHandler.GetUser(uniqueUsername);
             var (success, token) = user != null && user.Password == "securePass"
                 ? (true, Token._CreateTokenFor(user))
@@ -47,7 +47,7 @@ namespace MTCG.Tests
             Assert.IsNotEmpty(token);
         }
 
-        // 3️⃣ Test login with incorrect password using a unique username
+        // attempt login with incorrect password using a unique username
         [Test]
         public void Logon_ShouldFail_WhenPasswordIsIncorrect()
         {
@@ -60,7 +60,7 @@ namespace MTCG.Tests
             Assert.IsEmpty(token);
         }
 
-        // 4️⃣ Test retrieving a non-existent user with a unique username
+        // Try to access a non-existent user
         [Test]
         public void GetUser_ShouldReturnNull_WhenUserDoesNotExist()
         {
@@ -69,7 +69,7 @@ namespace MTCG.Tests
             Assert.IsNull(user);
         }
 
-        // 5️⃣ Test updating user stats using a unique username
+        // updating user stats 
         [Test]
         public void UpdateUser_ShouldModifyCoinsAndElo()
         {
@@ -79,10 +79,11 @@ namespace MTCG.Tests
 
             var user = _dbHandler.GetUser(uniqueUsername);
             Assert.NotNull(user);
-            Assert.AreEqual(50, user.coins);
-            Assert.AreEqual(200, user.elo);
+            Assert.AreEqual(50, user.Coins);
+            Assert.AreEqual(200, user.Elo);
         }
-        // 6️⃣ Test that a user cannot be created with a duplicate username
+        
+        // user cannot be created with a duplicate username
         [Test]
         public void CreateUser_ShouldFail_WhenUsernameAlreadyExists()
         {

@@ -32,8 +32,8 @@ namespace MTCG.Tests
             string user1 = "user1_test";
             string user2 = "user2_test";
 
-            EnsureUserExists(user1, 500); // Ensure user1 exists with 500 Elo
-            EnsureUserExists(user2, 400); // Ensure user2 exists with 400 Elo
+            EnsureUserExists(user1, 500); 
+            EnsureUserExists(user2, 400); 
 
             var scoreboard = _dbHandler.GetScoreboard();
 

@@ -14,7 +14,7 @@ namespace MTCG.Tests
 
         public static (string Username, string PackageId, List<string> CardIds) InitializeTestData(DBHandler dbHandler)
         {
-            if (_isInitialized) return (_testUsername, _testPackageId, _testCardIds); // Prevent duplicate setup
+            if (_isInitialized) return (_testUsername, _testPackageId, _testCardIds); 
 
             _testUsername = "testUser_" + Guid.NewGuid();
             dbHandler.CreateUser(_testUsername, "password", 20, 100, "", "", "");

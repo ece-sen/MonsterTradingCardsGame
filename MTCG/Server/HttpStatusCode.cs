@@ -1,7 +1,5 @@
 ﻿using System;
 
-
-
 namespace MTCG.Server
 {
     /// <summary>This enumeration defines HTTP status codes that are used by

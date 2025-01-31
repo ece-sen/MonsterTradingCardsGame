@@ -10,7 +10,7 @@ namespace MTCG.Server
 
         public DBHandler(bool useTestDb = false)
         {
-            if (useTestDb)  // for unit tests
+            if (useTestDb)  // for unit tests create a test db
             {
                 _connectionString = "Host=localhost;Username=swen1;Password=swen1;Database=swen1_test";
             }
@@ -67,7 +67,6 @@ namespace MTCG.Server
             
         }
 
-
         /// <summary>
         /// Get user by username.
         /// </summary>
@@ -90,20 +89,19 @@ namespace MTCG.Server
                     {
                         UserName = reader.GetString(0),
                         Password = reader.GetString(1),
-                        coins = reader.GetInt32(2),
-                        elo = reader.GetInt32(3),
+                        Coins = reader.GetInt32(2),
+                        Elo = reader.GetInt32(3),
                         Name = reader.IsDBNull(4) ? "" : reader.GetString(4),
                         Bio = reader.IsDBNull(5) ? "" : reader.GetString(5),
                         Image = reader.IsDBNull(6) ? "" : reader.GetString(6)
                     };
                 }
             }
-            
             return null;
         }
 
         /// <summary>
-        /// Update user information with optional fields.
+        /// Update user information.
         /// </summary>
         public void UpdateUser(string username, string? newName = null, string? password = null, int? coins = null, int? elo = null, string? bio = null, string? image = null)
         {
@@ -148,14 +146,14 @@ namespace MTCG.Server
                 bio ??= currentBio;
                 image ??= currentImage;
 
-                // Update all user attributes except Username
+                // Insert changes in db
                 const string updateQuery = @"
                 UPDATE users 
                 SET name = @name, password = @password, coins = @coins, elo = @elo, bio = @bio, image = @image 
                 WHERE username = @username;";
 
                 using var updateCommand = new NpgsqlCommand(updateQuery, connection);
-                updateCommand.Parameters.AddWithValue("@username", username); // Username remains unchanged
+                updateCommand.Parameters.AddWithValue("@username", username); 
                 updateCommand.Parameters.AddWithValue("@name", newName);
                 updateCommand.Parameters.AddWithValue("@password", password);
                 updateCommand.Parameters.AddWithValue("@coins", coins);
@@ -167,7 +165,7 @@ namespace MTCG.Server
             }
         }
 
-
+        // Adds card to db from with the info coming from CardHandler
         public void AddCard(string cardId, string name, double damage, string elementType, string type)
         {
             lock (_dbLock)
@@ -191,6 +189,7 @@ namespace MTCG.Server
             }
         }
 
+        // Add 5 cards to one package with the same packageId
         public void AddCardToPackage(string packageId, string cardId)
         {
             lock (_dbLock)
@@ -211,6 +210,7 @@ namespace MTCG.Server
             }
         }
         
+        // Deduct 5 coins when user purchases a package successfully
         public void DeductCoins(string username, int coins)
         {
             lock (_dbLock)
@@ -236,15 +236,16 @@ namespace MTCG.Server
             }
         }
 
+        // Assign card owner in users who purchased the package
         public void AssignPackageToUser(string username, string packageId)
         {
             lock (_dbLock)
             {
                 const string query = @"
-            UPDATE cards 
-            SET owner = @username 
-            WHERE id IN (SELECT card_id FROM packages WHERE package_id = @package_id)
-            AND owner IS NULL;";
+                UPDATE cards 
+                SET owner = @username 
+                WHERE id IN (SELECT card_id FROM packages WHERE package_id = @package_id)
+                AND owner IS NULL;";
 
                 using var connection = GetConnection();
                 connection.Open();
@@ -256,6 +257,8 @@ namespace MTCG.Server
                 command.ExecuteNonQuery();
             }
         }
+        
+        // Control if package is available to buy
         public string GetAvailablePackage()
         {
             lock (_dbLock)
@@ -280,6 +283,8 @@ namespace MTCG.Server
                 return result?.ToString() ?? string.Empty;
             }
         }
+        
+        // Print user cards
         public List<Card> GetUserCards(string username)
         {
             lock (_dbLock)
@@ -306,7 +311,7 @@ namespace MTCG.Server
                     string elementType = reader.GetString(3);
                     string type = reader.GetString(4);
 
-                    // Dynamically determine card type
+                    // determine card type
                     if (type == "Monster")
                     {
                         cards.Add(new MonsterCard(id, name, damage));
@@ -316,18 +321,19 @@ namespace MTCG.Server
                         cards.Add(new SpellCard(id, name, damage));
                     }
                 }
-
                 return cards;
             }
         }
+        
+        // Choose 4 cards in stack for deck
         public List<Card> GetDeck(string username)
         {
             lock (_dbLock)
             {
                 const string query = @"
-            SELECT id, name, damage, element_type, type
-            FROM cards
-            WHERE owner = @username AND in_deck = TRUE;";
+                SELECT id, name, damage, element_type, type
+                FROM cards
+                WHERE owner = @username AND in_deck = TRUE;";
 
                 using var connection = GetConnection();
                 connection.Open();
@@ -355,18 +361,18 @@ namespace MTCG.Server
                         deck.Add(new SpellCard(id, name, damage));
                     }
                 }
-
                 return deck;
             }
         }
         
+        // Check if card is in user's stack
         public bool CardBelongsToUser(string username, string cardId)
         {
             lock (_dbLock)
             {
                 const string query = @"
-        SELECT COUNT(*) FROM cards 
-        WHERE id = @cardId AND owner = @username;";
+                SELECT COUNT(*) FROM cards 
+                WHERE id = @cardId AND owner = @username;";
 
                 using var connection = GetConnection();
                 connection.Open();
@@ -376,18 +382,19 @@ namespace MTCG.Server
                 command.Parameters.AddWithValue("@username", username);
 
                 int count = Convert.ToInt32(command.ExecuteScalar());
-                return count > 0; // ✅ True if card exists & belongs to user
+                return count > 0; // true if card exists & belongs to user
             }
         }
         
+        // Choose cards to be in the deck
         public void DefineDeck(string username, List<string> cardIds)
         {
             lock (_dbLock)
             {
                 const string query = @"
-        UPDATE cards 
-        SET in_deck = TRUE 
-        WHERE id = @cardId AND owner = @username;";
+                UPDATE cards 
+                SET in_deck = TRUE 
+                WHERE id = @cardId AND owner = @username;";
 
                 using var connection = GetConnection();
                 connection.Open();
@@ -407,14 +414,15 @@ namespace MTCG.Server
             }
         }
         
+        // reset the ownership, exclude from the deck
         public void ResetDeck(string username)
         {
             lock (_dbLock)
             {
                 const string query = @"
-        UPDATE cards 
-        SET in_deck = FALSE 
-        WHERE owner = @username;";
+                UPDATE cards 
+                SET in_deck = FALSE 
+                WHERE owner = @username;";
 
                 using var connection = GetConnection();
                 connection.Open();
@@ -424,6 +432,8 @@ namespace MTCG.Server
                 command.ExecuteNonQuery();
             }
         }
+        
+        // Update game stats
         public void UpdateGameStats(string username, bool won, bool lost)
         {
             lock (_dbLock)
@@ -432,11 +442,11 @@ namespace MTCG.Server
                 connection.Open();
 
                 const string query = @"
-            UPDATE users 
-            SET games_played = games_played + 1,
-                wins = wins + CASE WHEN @won THEN 1 ELSE 0 END,
-                losses = losses + CASE WHEN @lost THEN 1 ELSE 0 END
-            WHERE username = @username;";
+                UPDATE users 
+                SET games_played = games_played + 1,
+                    wins = wins + CASE WHEN @won THEN 1 ELSE 0 END,
+                    losses = losses + CASE WHEN @lost THEN 1 ELSE 0 END
+                WHERE username = @username;";
 
                 using var command = new NpgsqlCommand(query, connection);
                 command.Parameters.AddWithValue("@username", username);
@@ -446,14 +456,16 @@ namespace MTCG.Server
                 command.ExecuteNonQuery();
             }
         }
+        
+        // Print scoreboard by highest ELO
         public List<User> GetScoreboard()
         {
             lock (_dbLock)
             {
                 const string query = @"
-            SELECT username, elo, games_played, wins, losses 
-            FROM users 
-            ORDER BY elo DESC, wins DESC, games_played ASC;";
+                SELECT username, elo, games_played, wins, losses 
+                FROM users 
+                ORDER BY elo DESC, wins DESC, games_played ASC;";
 
                 using var connection = GetConnection();
                 connection.Open();
@@ -467,10 +479,10 @@ namespace MTCG.Server
                     scoreboard.Add(new User
                     {
                         UserName = reader.GetString(0),
-                        elo = reader.GetInt32(1),
-                        games_played = reader.GetInt32(2),
-                        wins = reader.GetInt32(3),
-                        losses = reader.GetInt32(4)
+                        Elo = reader.GetInt32(1),
+                        GamesPlayed = reader.GetInt32(2),
+                        Wins = reader.GetInt32(3),
+                        Losses = reader.GetInt32(4)
                     });
                 }
 

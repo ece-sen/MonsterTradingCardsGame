@@ -16,7 +16,7 @@ public class SpellCard : Card
             return ElementType.Water;
         if (name.Contains("Fire", StringComparison.OrdinalIgnoreCase))
             return ElementType.Fire;
-        return ElementType.Normal; //default if there is no element mentioned in the name
+        return ElementType.Normal; // default if there is no element mentioned in the name
     }
 
     public override void DisplayInfo()
