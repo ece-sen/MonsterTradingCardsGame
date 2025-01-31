@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Text.Json.Nodes;
-using MTCG.Exceptions;
 namespace MTCG.Server
 {
     public class UserHandler : Handler, IHandler

@@ -2,8 +2,6 @@
 using System.Security;
 using System.Security.Authentication;
 
-using MTCG.Exceptions;
-
 
 
 namespace MTCG.Server
