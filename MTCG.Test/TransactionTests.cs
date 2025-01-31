@@ -19,13 +19,47 @@ namespace MTCG.Tests
         public void Setup()
         {
             _dbHandler = new DBHandler(useTestDb: true); // ✅ Use the test database
-            (_testUsername, _testPackageId, _testCardIds) =
-                TestDataSetup.InitializeTestData(_dbHandler); // ✅ Load shared test data
+
+            // ✅ Ensure test data is always created before running tests
+            (_testUsername, _testPackageId, _testCardIds) = TestDataSetup.InitializeTestData(_dbHandler);
+
+            // ✅ Ensure at least one package exists before running tests
+            if (string.IsNullOrEmpty(_dbHandler.GetAvailablePackage()))
+            {
+                string packageId = Guid.NewGuid().ToString();
+                List<string> cardIds = new();
+
+                for (int i = 0; i < 5; i++)
+                {
+                    string cardId = Guid.NewGuid().ToString();
+                    cardIds.Add(cardId);
+                    _dbHandler.AddCard(cardId, $"TestCard_{i}", 30 + (i * 5), "Normal", "Monster");
+                }
+
+                foreach (var cardId in cardIds)
+                {
+                    _dbHandler.AddCardToPackage(packageId, cardId);
+                }
+            }
         }
 
+        // 1️⃣ Ensure package purchase works first
+        [Test, Order(1)]
+        public void PurchasePackage_ShouldAssignPackageIfAvailable()
+        {
+            Token._CreateTokenFor(new User { UserName = _testUsername });
+            TransactionHandler transactionHandler = new();
+            TcpClient fakeClient = new TcpClient();
+            HttpSvrEventArgs fakeRequest = new(fakeClient, "POST /transactions/packages");
 
+            transactionHandler.Handle(fakeRequest);
+
+            var retrievedCards = _dbHandler.GetUserCards(_testUsername);
+            Assert.AreEqual(5, retrievedCards.Count, "User should have received a full package of 5 cards!");
+        }
+        
         // 2️⃣ Test that a user cannot buy a package if they don’t have enough coins
-        [Test]
+        [Test, Order(3)]
         public void PurchasePackage_ShouldFailForInsufficientCoins()
         {
             string lowCoinsUser = "lowCoinsUser_" + Guid.NewGuid();
@@ -41,23 +75,8 @@ namespace MTCG.Tests
             Assert.AreEqual(4, user.coins, "User should not have been able to buy a package!");
         }
 
-        // 3️⃣ Test that a package is assigned if available
-        [Test]
-        public void PurchasePackage_ShouldAssignPackageIfAvailable()
-        {
-            Token._CreateTokenFor(new User { UserName = _testUsername });
-            TransactionHandler transactionHandler = new();
-            TcpClient fakeClient = new TcpClient(); // ✅ Fix: Provide a dummy TCP client
-            HttpSvrEventArgs fakeRequest = new(fakeClient, "POST /transactions/packages");
-
-            transactionHandler.Handle(fakeRequest);
-
-            var retrievedCards = _dbHandler.GetUserCards(_testUsername);
-            Assert.AreEqual(5, retrievedCards.Count, "User should have received a full package of 5 cards!");
-        }
-
         // 4️⃣ Test that a user with 0 coins cannot buy a package
-        [Test]
+        [Test, Order(4)]
         public void PurchasePackage_ShouldFailForZeroCoins()
         {
             string zeroCoinsUser = "zeroCoinsUser_" + Guid.NewGuid();
@@ -76,3 +95,4 @@ namespace MTCG.Tests
         }
     }
 }
+

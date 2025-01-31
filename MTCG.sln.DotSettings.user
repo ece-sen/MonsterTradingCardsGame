@@ -36,5 +36,8 @@
     &lt;TestId&gt;NUnit3x::C09ACB4E-FBBA-4EB0-B6F4-9B8DB9FF2698::net8.0::MTCG.Tests.CardTests.SpellCard_DisplayInfo_ShouldOutputCorrectInfo&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;NUnit3x::C09ACB4E-FBBA-4EB0-B6F4-9B8DB9FF2698::net8.0::MTCG.Tests.UserTests&lt;/TestId&gt;&#xD;
     &lt;TestId&gt;NUnit3x::C09ACB4E-FBBA-4EB0-B6F4-9B8DB9FF2698::net8.0::MTCG.Tests.CardTests&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::C09ACB4E-FBBA-4EB0-B6F4-9B8DB9FF2698::net8.0::MTCG.Tests.DeckTests&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::C09ACB4E-FBBA-4EB0-B6F4-9B8DB9FF2698::net8.0::MTCG.Tests.BattleTests&lt;/TestId&gt;&#xD;
+    &lt;TestId&gt;NUnit3x::C09ACB4E-FBBA-4EB0-B6F4-9B8DB9FF2698::net8.0::MTCG.Tests.ScoreboardTests&lt;/TestId&gt;&#xD;
   &lt;/TestAncestor&gt;&#xD;
 &lt;/SessionState&gt;</s:String></wpf:ResourceDictionary>
