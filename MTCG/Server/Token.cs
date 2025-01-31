@@ -33,6 +33,13 @@ namespace MTCG.Server
         /// <returns>Token string.</returns>
         public static string _CreateTokenFor(User user)
         {
+            string token = $"{user.UserName}-mtcgToken"; // Token-Format: username-mtcgToken
+            _Tokens[token] = user;
+            return token;
+        }
+        /*
+        public static string _CreateTokenFor(User user)
+        {
             string token;
             Random rnd = new();
             
@@ -51,7 +58,7 @@ namespace MTCG.Server
             
             return token;
         }
-
+*/
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         // public static methods                                                                                            //
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
