@@ -60,7 +60,7 @@ public class BattleHandler : Handler, IHandler
         return true;
     }
 
-    private void RunBattle(string player1, string player2, DBHandler dbHandler)
+    public void RunBattle(string player1, string player2, DBHandler dbHandler)
     {
         battleList.Add($"Battle started between {player1} and {player2}");
         
@@ -106,7 +106,7 @@ public class BattleHandler : Handler, IHandler
         }
     }
 
-    private void ResolveRound(Card card1, Card card2, List<Card> deck1, List<Card> deck2)
+    public void ResolveRound(Card card1, Card card2, List<Card> deck1, List<Card> deck2)
     {
         // for unique feature
         Random rng = new Random();
@@ -174,27 +174,36 @@ public class BattleHandler : Handler, IHandler
             deck2.Add(card1);
         }
     }
-    
-    private double ApplyElementEffect(Card attacker, Card defender)
+
+    public double ApplyElementEffect(Card attacker, Card defender)
     {
-        if (attacker is MonsterCard m1 && defender is MonsterCard m2)
+        if (attacker is MonsterCard && defender is MonsterCard)
             return attacker.Damage;
 
-        if (attacker is SpellCard spell)
+        if (attacker is SpellCard spell && defender is MonsterCard monster)
         {
-            switch (spell.ElementType)
-            {
-                case ElementType.Water when defender is MonsterCard { ElementType: ElementType.Fire }:
-                case ElementType.Fire when defender is MonsterCard { ElementType: ElementType.Normal }:
-                case ElementType.Normal when defender is MonsterCard { ElementType: ElementType.Water }:
-                    return attacker.Damage * 2;
+            Console.WriteLine($"Spell {spell.Name} ({spell.ElementType}) attacking {monster.Name} ({monster.ElementType})");
 
-                case ElementType.Fire when defender is MonsterCard { ElementType: ElementType.Water }:
-                case ElementType.Normal when defender is MonsterCard { ElementType: ElementType.Fire }:
-                case ElementType.Water when defender is MonsterCard { ElementType: ElementType.Normal }:
-                    return attacker.Damage / 2;
+            // Double damage
+            if ((spell.ElementType == ElementType.Water && monster.ElementType == ElementType.Fire) ||
+                (spell.ElementType == ElementType.Fire && monster.ElementType == ElementType.Normal) ||
+                (spell.ElementType == ElementType.Normal && monster.ElementType == ElementType.Water))
+            {
+                Console.WriteLine($"Applying Double Damage: {attacker.Damage} -> {attacker.Damage * 2}");
+                return attacker.Damage * 2;
+            }
+
+            // Half damage
+            if ((spell.ElementType == ElementType.Fire && monster.ElementType == ElementType.Water) ||
+                (spell.ElementType == ElementType.Normal && monster.ElementType == ElementType.Fire) ||
+                (spell.ElementType == ElementType.Water && monster.ElementType == ElementType.Normal))
+            {
+                Console.WriteLine($"Applying Half Damage: {attacker.Damage} -> {attacker.Damage / 2}");
+                return attacker.Damage / 2;
             }
         }
+
         return attacker.Damage;
     }
+
 }

@@ -489,6 +489,20 @@ namespace MTCG.Server
                 return scoreboard;
             }
         }
+        public void ClearDatabase()
+        {
+            using (var connection = GetConnection()) // Ensure this opens a connection
+            {
+                connection.Open();
+                using (var command = connection.CreateCommand())
+                {
+                    command.CommandText = @"
+                DELETE FROM users;
+            ";
+                    command.ExecuteNonQuery();
+                }
+            }
+        }
 
     }
 }

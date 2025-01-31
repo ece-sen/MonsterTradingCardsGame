@@ -1,100 +1,170 @@
 ﻿using NUnit.Framework;
 using MTCG.Server;
 using MTCG.Models;
-using System;
 using System.Collections.Generic;
-using System.Net.Sockets;
+using System.Linq;
+using System.Security.Cryptography.X509Certificates;
 
 namespace MTCG.Tests
 {
     [TestFixture]
     public class BattleTests
     {
-        private DBHandler _dbHandler;
-        private string _testUsername;
-        private string _opponentUsername;
-        private string _testPackageId;
-        private string _opponentPackageId;
-        private List<string> _testUserCardIds;
-        private List<string> _opponentCardIds;
         private BattleHandler _battleHandler;
+        private DBHandler _dbHandler;
+        private DeckHandler _deckHandler;
 
         [SetUp]
         public void Setup()
         {
-            _dbHandler = new DBHandler(useTestDb: true); 
+            _battleHandler = new BattleHandler();
+            _dbHandler = new DBHandler(useTestDb: true);
+            _deckHandler = new DeckHandler();
 
-            // create test users
-            _testUsername = "testUser_" + Guid.NewGuid();
-            _opponentUsername = "opponentUser_" + Guid.NewGuid();
-            _dbHandler.CreateUser(_testUsername, "password", 20, 100, "", "", "");
-            _dbHandler.CreateUser(_opponentUsername, "password", 20, 100, "", "", "");
+            // Reset test database before each test
+            _dbHandler.ClearDatabase();
 
-            // create unique package IDs
-            _testPackageId = Guid.NewGuid().ToString();
-            _opponentPackageId = Guid.NewGuid().ToString();
+            // Create test users
+            _dbHandler.CreateUser("Player1", "password", 20, 100, "", "", "");
+            _dbHandler.CreateUser("Player2", "password", 20, 100, "", "", "");
 
-            _testUserCardIds = new List<string>();
-            _opponentCardIds = new List<string>();
+            // Create unique package IDs
+            string packageIdP1 = Guid.NewGuid().ToString();
+            string packageIdP2 = Guid.NewGuid().ToString();
 
-            // create a deck for test user
-            for (int i = 1; i <= 4; i++)
-            {
-                string cardId = Guid.NewGuid().ToString();
-                _testUserCardIds.Add(cardId);
-                _dbHandler.AddCard(cardId, $"TestUserCard_{i}", 30 + (i * 5), "Normal", "Monster");
-            }
+            // Add 5 cards to Player1's package
+            string goblinId = Guid.NewGuid().ToString();
+            string orkId = Guid.NewGuid().ToString();
+            string knightId = Guid.NewGuid().ToString();
+            string krakenId = Guid.NewGuid().ToString();
+            string extraCardP1 = Guid.NewGuid().ToString(); // This extra card won't be in the deck
 
-            // Create a deck cards for opponent
-            for (int i = 1; i <= 4; i++)
-            {
-                string cardId = Guid.NewGuid().ToString();
-                _opponentCardIds.Add(cardId);
-                _dbHandler.AddCard(cardId, $"OpponentCard_{i}", 30 + (i * 5), "Normal", "Monster");
-            }
+            _dbHandler.AddCard(goblinId, "Goblin", 10, "Normal", "Monster");
+            _dbHandler.AddCard(orkId, "Ork", 15, "Fire", "Monster");
+            _dbHandler.AddCard(knightId, "Knight", 20, "Water", "Monster");
+            _dbHandler.AddCard(krakenId, "Kraken", 25, "Normal", "Monster");
+            _dbHandler.AddCard(extraCardP1, "ExtraCardP1", 5, "Normal", "Monster"); // This will NOT be in the deck
 
-            foreach (var cardId in _testUserCardIds)
-            {
-                _dbHandler.AddCardToPackage(_testPackageId, cardId);
-            }
+            _dbHandler.AddCardToPackage(packageIdP1, goblinId);
+            _dbHandler.AddCardToPackage(packageIdP1, orkId);
+            _dbHandler.AddCardToPackage(packageIdP1, knightId);
+            _dbHandler.AddCardToPackage(packageIdP1, krakenId);
+            _dbHandler.AddCardToPackage(packageIdP1, extraCardP1);
 
-            foreach (var cardId in _opponentCardIds)
-            {
-                _dbHandler.AddCardToPackage(_opponentPackageId, cardId);
-            }
+            // Add 5 cards to Player2's package
+            string dragonId = Guid.NewGuid().ToString();
+            string wizardId = Guid.NewGuid().ToString();
+            string waterSpellId = Guid.NewGuid().ToString();
+            string fireElfId = Guid.NewGuid().ToString();
+            string extraCardP2 = Guid.NewGuid().ToString(); // This extra card won't be in the deck
+
+            _dbHandler.AddCard(dragonId, "Dragon", 30, "Fire", "Monster");
+            _dbHandler.AddCard(wizardId, "Wizard", 5, "Normal", "Monster");
+            _dbHandler.AddCard(waterSpellId, "Water Spell", 12, "Water", "Spell");
+            _dbHandler.AddCard(fireElfId, "FireElf", 10, "Fire", "Monster");
+            _dbHandler.AddCard(extraCardP2, "ExtraCardP2", 5, "Normal", "Monster"); // This will NOT be in the deck
+
+            _dbHandler.AddCardToPackage(packageIdP2, dragonId);
+            _dbHandler.AddCardToPackage(packageIdP2, wizardId);
+            _dbHandler.AddCardToPackage(packageIdP2, waterSpellId);
+            _dbHandler.AddCardToPackage(packageIdP2, fireElfId);
+            _dbHandler.AddCardToPackage(packageIdP2, extraCardP2);
 
             // Assign packages to users
-            _dbHandler.AssignPackageToUser(_testUsername, _testPackageId);
-            _dbHandler.AssignPackageToUser(_opponentUsername, _opponentPackageId);
+            _dbHandler.AssignPackageToUser("Player1", packageIdP1);
+            _dbHandler.AssignPackageToUser("Player2", packageIdP2);
 
-            if (_dbHandler.GetUserCards(_testUsername).Count < 4 || _dbHandler.GetUserCards(_opponentUsername).Count < 4)
-            {
-                throw new Exception($"One or both players do not have enough cards to battle.");
-            }
+            // Fetch user's cards (all 5 from the package)
+            var player1Cards = _dbHandler.GetUserCards("Player1").Select(c => c.Id).ToList();
+            var player2Cards = _dbHandler.GetUserCards("Player2").Select(c => c.Id).ToList();
 
-            _dbHandler.DefineDeck(_testUsername, _testUserCardIds);
-            _dbHandler.DefineDeck(_opponentUsername, _opponentCardIds);
-
-            _battleHandler = new BattleHandler();
+            // Ensure we only use the first 4 cards in the deck
+            _dbHandler.DefineDeck("Player1", player1Cards.Take(4).ToList());
+            _dbHandler.DefineDeck("Player2", player2Cards.Take(4).ToList());
         }
-
-        // battle starts when two players join the queue
+        
         [Test]
-        public void BattleStartsWhenTwoPlayersAreInQueue()
+        public void Test_Goblin_And_Dragon_Remain_In_Deck()
         {
-            Token._CreateTokenFor(new User { UserName = _testUsername });
-            Token._CreateTokenFor(new User { UserName = _opponentUsername });
+            // Arrange: Get the decks after setup
+            var deck1 = _dbHandler.GetDeck("Player1");
+            var deck2 = _dbHandler.GetDeck("Player2");
 
-            TcpClient fakeClient1 = new TcpClient();
-            TcpClient fakeClient2 = new TcpClient();
+            // Find the specific cards
+            var goblin = deck1.First(c => c.Name == "Goblin");
+            var dragon = deck2.First(c => c.Name == "Dragon");
 
-            HttpSvrEventArgs fakeRequest1 = new(fakeClient1, "POST /battles");
-            HttpSvrEventArgs fakeRequest2 = new(fakeClient2, "POST /battles");
+            int initialDeck1Size = deck1.Count;
+            int initialDeck2Size = deck2.Count;
 
-            _battleHandler.Handle(fakeRequest1);
-            bool battleStarted = _battleHandler.Handle(fakeRequest2);
+            // Act: Resolve a battle round between Goblin and Dragon
+            _battleHandler.ResolveRound(goblin, dragon, deck1, deck2);
 
-            Assert.IsTrue(battleStarted, "Battle should start when two players join the queue.");
+            // Assert: Check that no cards were removed from the decks
+            Assert.AreEqual(initialDeck1Size, deck1.Count, "Goblin should not be removed from deck.");
+            Assert.AreEqual(initialDeck2Size, deck2.Count, "Dragon should not be removed from deck.");
         }
+        [Test]
+        public void Test_Knight_Drowns_From_WaterSpell()
+        {
+            // Arrange: Get decks after setup
+            var deck1 = _dbHandler.GetDeck("Player1");
+            var deck2 = _dbHandler.GetDeck("Player2");
+
+            // Find the Knight and Water Spell
+            var knight = deck1.First(c => c.Name == "Knight");
+            var waterSpell = deck2.First(c => c.Name == "Water Spell");
+
+            int initialDeck1Size = deck1.Count;
+
+            // Act: Resolve round
+            _battleHandler.ResolveRound(knight, waterSpell, deck1, deck2);
+
+            // Assert: Knight should be removed from deck1
+            Assert.AreEqual(initialDeck1Size - 1, deck1.Count, "Knight should be removed due to drowning.");
+            Assert.That(_battleHandler.battleList, Has.Some.Contains("Knight drowns instantly due to Water Spell!"));
+        }
+
+        [Test]
+        public void Test_FireElf_Evades_Dragon_Attack()
+        {
+            // Arrange: Get the decks after setup
+            var deck1 = _dbHandler.GetDeck("Player1");
+            var deck2 = _dbHandler.GetDeck("Player2");
+
+            // Find the specific cards
+            var fireElf = deck2.First(c => c.Name == "FireElf");
+            var dragon = deck2.First(c => c.Name == "Dragon");
+
+            int initialDeckSize = deck2.Count;
+
+            // Act: Resolve a battle round between FireElf and Dragon
+            _battleHandler.ResolveRound(fireElf, dragon, deck2, deck2);
+
+            // Assert: FireElf should still be in the deck (evades attack)
+            Assert.AreEqual(initialDeckSize, deck2.Count, "FireElf should not be removed since it evades Dragon.");
+            Assert.That(_battleHandler.battleList, Has.Some.Contains("FireElf evades Dragon's attack!"));
+        }
+        [Test]
+        public void Test_Kraken_Immune_To_Spells()
+        {
+            // Arrange: Get decks after setup
+            var deck1 = _dbHandler.GetDeck("Player1");
+            var deck2 = _dbHandler.GetDeck("Player2");
+
+            // Find the Kraken and Water Spell
+            var kraken = deck1.First(c => c.Name == "Kraken");
+            var spell = deck2.First(c => c is SpellCard); // Any spell
+
+            int initialDeck1Size = deck1.Count;
+
+            // Act: Resolve round
+            _battleHandler.ResolveRound(kraken, spell, deck1, deck2);
+
+            // Assert: Kraken should still be in the deck
+            Assert.AreEqual(initialDeck1Size, deck1.Count, "Kraken should remain in deck because it is immune to spells.");
+            Assert.That(_battleHandler.battleList, Has.Some.Contains("Kraken is immune to spells!"));
+        }
+
     }
 }
