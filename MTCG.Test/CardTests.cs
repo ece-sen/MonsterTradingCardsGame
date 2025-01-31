@@ -22,7 +22,7 @@ namespace MTCG.Tests
             (_testUsername, _testPackageId, _testCardIds) = TestDataSetup.InitializeTestData(_dbHandler); // ✅ Use shared test data
         }
 
-        // 1️⃣ Test creating a MonsterCard
+        // Test to assign right element to a monster card
         [Test]
         public void MonsterCard_ShouldAssignCorrectElementType()
         {
@@ -30,7 +30,7 @@ namespace MTCG.Tests
             Assert.AreEqual(ElementType.Fire, card.ElementType);
         }
 
-        // 2️⃣ Test creating a SpellCard
+        //  Test to assign right element to a spell card
         [Test]
         public void SpellCard_ShouldAssignCorrectElementType()
         {
@@ -38,7 +38,7 @@ namespace MTCG.Tests
             Assert.AreEqual(ElementType.Water, card.ElementType);
         }
 
-        // 3️⃣ Test DisplayInfo() outputs correctly for MonsterCard
+        // display card information for monster card
         [Test]
         public void MonsterCard_DisplayInfo_ShouldOutputCorrectInfo()
         {
@@ -53,7 +53,7 @@ namespace MTCG.Tests
             }
         }
 
-        // 4️⃣ Test DisplayInfo() outputs correctly for SpellCard
+        // display card information for spell card
         [Test]
         public void SpellCard_DisplayInfo_ShouldOutputCorrectInfo()
         {
@@ -68,7 +68,7 @@ namespace MTCG.Tests
             }
         }
 
-        // 5️⃣ Test retrieving stored cards from the database
+        // retrieve cards to proof if they are saved in db
         [Test]
         public void GetUserCards_ShouldReturnCardsForUser()
         {
@@ -80,7 +80,7 @@ namespace MTCG.Tests
             }
         }
 
-        // 6️⃣ Test retrieving cards for a non-existent user
+        // try to retrieve unknown user's cards
         [Test]
         public void GetUserCards_ShouldReturnEmptyForNonexistentUser()
         {
@@ -88,7 +88,7 @@ namespace MTCG.Tests
             Assert.IsEmpty(retrievedCards);
         }
 
-        // 7️⃣ Test that a user cannot access another user's card
+        // test if a user can access another user's card
         [Test]
         public void CardBelongsToUser_ShouldReturnFalseForWrongUser()
         {

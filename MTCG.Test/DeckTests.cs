@@ -21,7 +21,7 @@ namespace MTCG.Tests
             (_testUsername, _testPackageId, _testCardIds) = TestDataSetup.InitializeTestData(_dbHandler); // ✅ Load shared test data
         }
 
-        // 1️⃣ Test adding a card to a user's deck
+        // Add a card to a user's deck
         [Test]
         public void AddCardToDeck_ShouldSucceed()
         {
@@ -33,7 +33,7 @@ namespace MTCG.Tests
             Assert.AreEqual(testCardId, deckCards[0].Id, "The correct card should be in the deck.");
         }
 
-        // 2️⃣ Test adding a card that does not belong to the user
+        // Try to add a card that does not belong to the user
         [Test]
         public void AddCardToDeck_ShouldFailForWrongUser()
         {
@@ -48,7 +48,7 @@ namespace MTCG.Tests
             }, "User should not be able to add a card that does not belong to them.");
         }
 
-        // 3️⃣ Test resetting a user's deck
+        // Reset user's deck
         [Test]
         public void ResetDeck_ShouldRemoveAllCards()
         {

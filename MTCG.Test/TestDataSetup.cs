@@ -21,7 +21,7 @@ namespace MTCG.Tests
 
             _testPackageId = Guid.NewGuid().ToString();
 
-            // ✅ Create 5 cards
+            // Create 5 cards
             for (int i = 0; i < 5; i++)
             {
                 string cardId = Guid.NewGuid().ToString();
@@ -29,13 +29,13 @@ namespace MTCG.Tests
                 dbHandler.AddCard(cardId, $"TestCard_{i}", 30 + (i * 5), "Normal", "Monster");
             }
 
-            // ✅ Link the cards to the package
+            // Add cards to the package
             foreach (var cardId in _testCardIds)
             {
                 dbHandler.AddCardToPackage(_testPackageId, cardId);
             }
 
-            // ✅ Assign package to user
+            // Assign package to user
             dbHandler.AssignPackageToUser(_testUsername, _testPackageId);
 
             _isInitialized = true; // Prevent multiple test setups
